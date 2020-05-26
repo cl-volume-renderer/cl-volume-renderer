@@ -15,4 +15,3 @@ file(GLOB app_SRC
 add_executable(volume-renderer "app/main.cpp" ${app_SRC})
 
 add_subdirectory(opencl_wrapper)
-add_subdirectory(app)
