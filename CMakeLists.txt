@@ -14,5 +14,8 @@ file(GLOB app_SRC
   "app/*.cpp"
   )
 
+find_package(ZLIB REQUIRED)
+
 add_executable(volume-renderer "app/main.cpp" ${app_SRC})
-target_link_libraries(volume-renderer PRIVATE opencl_wrapper)
+target_include_directories(volume-renderer PRIVATE ${ZLIB_INCLUDE_DIRS})
+target_link_libraries(volume-renderer PRIVATE opencl_wrapper ${ZLIB_LIBRARY})
