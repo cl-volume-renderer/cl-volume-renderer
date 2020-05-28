@@ -1,8 +1,11 @@
 openmp = dependency('openmp')
+opencl = dependency('OpenCL')
 
 opencl_wrapper_lib = static_library('opencl_wrapper',
-                    join_paths('src', 'libmain.cpp'),
-                    dependencies: openmp,
+                    [join_paths('src', 'libmain.cpp'),
+                     join_paths('src', 'clw_context.cpp')],
+                    include_directories: include_directories('include'),
+                    dependencies: [openmp, opencl],
                  )
 
 opencl_wrapper = declare_dependency(
