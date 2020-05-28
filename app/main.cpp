@@ -1,6 +1,8 @@
 #include <iostream>
+#include "ui.h"
 
 int main(){
-  std::cout << "Hello World\n";
+  Ui ui = Ui();
+  ui.run();
   return 0;
 }
