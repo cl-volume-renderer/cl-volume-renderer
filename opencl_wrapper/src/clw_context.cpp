@@ -49,3 +49,10 @@ clw_context::~clw_context(){
   clw_fail_hard_on_error(clReleaseCommandQueue(m_command_queue));
   clw_fail_hard_on_error(clReleaseContext(m_context));
 }
+const cl_context clw_context::get_cl_context() const{
+  return m_context;
+}
+
+const cl_command_queue clw_context::get_cl_command_queue() const{
+  return m_command_queue;
+}

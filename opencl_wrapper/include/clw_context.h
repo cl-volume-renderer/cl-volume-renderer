@@ -13,6 +13,9 @@ class clw_context{
   clw_context& operator=(const clw_context&) = delete;
   clw_context& operator=(clw_context&&) = delete;
 
+  const cl_context get_cl_context() const;
+  const cl_command_queue get_cl_command_queue() const;
+
   private:
   cl_context m_context;
   cl_command_queue m_command_queue;

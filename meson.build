@@ -1,5 +1,6 @@
 project('gpgpu-volume-renderer',
   'cpp',
+  default_options: ['cpp_std=c++17'],
   version: '0.1'
 )
 
