@@ -51,14 +51,14 @@ class clw_vector {
     return m_host_array[index];
   }
 
-  // Pushes host data to device
+  /// Pushes host data to device
   void push() const{
     clw_fail_hard_on_error(clEnqueueWriteBuffer(
         m_context.get_cl_command_queue(), m_device_array, CL_TRUE /*blocking*/,
         0, m_host_array.size() * sizeof(TDevice), m_host_array.data(), 0,
         NULL, NULL));
   }
-  // Pulls device data
+  /// Pulls device data
   void pull() {
         clw_fail_hard_on_error(clEnqueueReadBuffer(
             m_context.get_cl_command_queue(), m_device_array,
@@ -66,8 +66,14 @@ class clw_vector {
             m_host_array.data(), 0, NULL, NULL));
   }
 
+  /// Returns a reference to the internal opencl object
   const cl_mem& get_device_reference() const{
     return m_device_array;
+  }
+
+  /// Returns the size of the vector
+  size_t size() const{
+    return m_host_array.size();
   }
 
  private:
