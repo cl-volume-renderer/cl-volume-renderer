@@ -14,4 +14,5 @@ class Ui {
     ~Ui();
     void run(void);
     const GLuint frametexture_get(void);
+    void * gl_context_get(void);
 };

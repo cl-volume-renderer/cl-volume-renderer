@@ -52,6 +52,10 @@ Ui::~Ui() {
   SDL_Quit();
 }
 
+void * Ui::gl_context_get(void) {
+  return gl_context;
+}
+
 const GLuint Ui::frametexture_get(void) {
   return frametexture;
 }
