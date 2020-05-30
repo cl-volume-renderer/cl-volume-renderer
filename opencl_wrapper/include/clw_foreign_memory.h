@@ -7,9 +7,7 @@
 #include "clw_helper.h"
 #include <GL/gl.h>
 
-template <typename TDevice>
 class clw_foreign_memory {
-  using TInternal = typename std::remove_const<TDevice>::type;
  public:
   clw_foreign_memory(const clw_context& context, GLuint texture, GLenum texture_target = GL_TEXTURE_2D, GLint mip_level = 0)
       : m_context(context) {
