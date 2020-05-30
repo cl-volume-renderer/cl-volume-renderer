@@ -10,10 +10,14 @@
 #include "clw_helper.h"
 #include "clw_vector.h"
 
+#ifndef KERNEL_DIR
+#define KERNEL_DIR ""
+#endif
+
 class clw_function{
   public:
   clw_function(const clw_context& context, const std::string& path, const std::string& function_name): m_function_name(function_name), m_context(context){
-    std::ifstream file_stream(path);
+    std::ifstream file_stream(KERNEL_DIR + path);
     if(file_stream.fail()){
       std::cerr << "Failed to open file: " << path << ".\n";
       exit(1);
