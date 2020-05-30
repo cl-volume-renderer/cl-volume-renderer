@@ -6,6 +6,10 @@ class clw_context{
   public:
   ///Setup the OpenCL context or fail hard
   clw_context();
+  ///Setup the OpenCL context or fail hard
+  ///Share group with OpenGL context
+  ///@param gl_context a pointer to the GL context
+  clw_context(void * gl_context);
   ///Free CL context and queue
   ~clw_context();
   clw_context(const clw_context&) = delete;

@@ -1,6 +1,7 @@
 #include "clw_context.h"
 #include <vector>
 #include "clw_helper.h"
+#include <array>
 
 ///Helper function to return all platforms
 const std::vector<cl_platform_id> get_platforms(){
@@ -41,6 +42,19 @@ clw_context::clw_context(){
   const auto device_to_use = 0;
 
   m_context = clCreateContext(0,1,&devices[device_to_use], NULL, NULL, &error);
+  clw_fail_hard_on_error(error);
+  m_command_queue = clCreateCommandQueue(m_context, devices[device_to_use], CL_QUEUE_PROFILING_ENABLE, &error);
+}
+
+clw_context::clw_context(void * gl_context){
+  cl_int error; 
+  auto platforms = get_platforms();
+  auto devices = get_devices(platforms[0]);
+  const auto device_to_use = 0;
+  
+  std::array<cl_context_properties, 3> properties{CL_GL_CONTEXT_KHR, reinterpret_cast<cl_context_properties>(gl_context), 0};
+
+  m_context = clCreateContext(properties.data(),1,&devices[device_to_use], NULL, NULL, &error);
   clw_fail_hard_on_error(error);
   m_command_queue = clCreateCommandQueue(m_context, devices[device_to_use], CL_QUEUE_PROFILING_ENABLE, &error);
 }
