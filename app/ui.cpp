@@ -8,7 +8,11 @@
 #include <imgui_impl_opengl2.cpp>
 #include <imgui_impl_sdl.cpp>
 
+static const GLubyte emptyData[] = {100, 100, 100, 255};
+
 Ui::Ui() {
+  GLuint texture[1];
+
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s", SDL_GetError());
     return;
@@ -24,6 +28,12 @@ Ui::Ui() {
   SDL_GL_MakeCurrent(window, gl_context);
   SDL_GL_SetSwapInterval(1); // Enable vsync
 
+  //create texture for opencl for now we are filling that here with a empty color, so we dont have gargabe later.
+  glGenTextures(1, texture);
+  frametexture = texture[0];
+  glBindTexture(GL_TEXTURE_2D, frametexture);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, emptyData);
+
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
@@ -31,13 +41,17 @@ Ui::Ui() {
 }
 
 Ui::~Ui() {
- ImGui_ImplOpenGL2_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
-    ImGui::DestroyContext();
+  ImGui_ImplOpenGL2_Shutdown();
+  ImGui_ImplSDL2_Shutdown();
+  ImGui::DestroyContext();
 
-    SDL_GL_DeleteContext(gl_context);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+  SDL_GL_DeleteContext(gl_context);
+  SDL_DestroyWindow(window);
+  SDL_Quit();
+}
+
+const GLuint Ui::frametexture_get(void) {
+  return frametexture;
 }
 
 void Ui::run(void) {
@@ -61,10 +75,23 @@ void Ui::run(void) {
         ImGui::End();
 
         ImGui::Render();
+
+        //clear
         glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
-        //glUseProgram(0); // You may want this if using this code in an OpenGL 3+ context where shaders may be bound
+
+        //draw the image rendered in opencl
+        glBindTexture(GL_TEXTURE_2D, frametexture);
+        glEnable(GL_TEXTURE_2D);
+        glBegin(GL_QUADS);
+        glTexCoord2f(0, 0); glVertex2f(-1, -1);
+        glTexCoord2f(0, 1); glVertex2f(-1, 1);
+        glTexCoord2f(1, 1); glVertex2f(1, 1);
+        glTexCoord2f(1, 0); glVertex2f(1, -1);
+        glEnd();
+
+        //draw imgui
         ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(window);
     }

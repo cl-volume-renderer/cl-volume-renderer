@@ -8,8 +8,10 @@ class Ui {
   private:
   SDL_Window *window;
   SDL_GLContext gl_context;
+  GLuint frametexture;
   public:
     Ui();
     ~Ui();
     void run(void);
+    const GLuint frametexture_get(void);
 };
