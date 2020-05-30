@@ -6,17 +6,14 @@
 #include "clw_context.h"
 #include "clw_helper.h"
 
-template <typename THost, typename TDevice>
+template <typename TDevice>
 class clw_vector {
+  using TInternal = typename std::remove_const<TDevice>::type;
  public:
-  clw_vector(const clw_context& context, std::vector<THost>&& data)
+  clw_vector(const clw_context& context, std::vector<TInternal>&& data)
       : m_context(context) {
     cl_int error;
     m_host_array = data;
-    static_assert(
-        std::is_same<typename std::remove_const<THost>::type,
-                     typename std::remove_const<TDevice>::type>::value,
-        "Error, except for const-qualifier the types must be the same.");
 
     if constexpr(std::is_const<TDevice>::value) {
         m_device_array =
@@ -47,13 +44,15 @@ class clw_vector {
   clw_vector& operator=(const clw_vector&) = delete;
   clw_vector& operator=(clw_vector&&) = delete;
 
-  THost& operator[](std::size_t index) { return m_host_array[index]; }
-  const THost& operator[](std::size_t index) const {
+  TInternal& operator[](std::size_t index) { 
+    return m_host_array[index];
+  }
+  const TInternal& operator[](std::size_t index) const {
     return m_host_array[index];
   }
 
   // Pushes host data to device
-  void push() {
+  void push() const{
     clw_fail_hard_on_error(clEnqueueWriteBuffer(
         m_context.get_cl_command_queue(), m_device_array, CL_TRUE /*blocking*/,
         0, m_host_array.size() * sizeof(TDevice), m_host_array.data(), 0,
@@ -61,20 +60,18 @@ class clw_vector {
   }
   // Pulls device data
   void pull() {
-    if constexpr(!std::is_const<THost>::value) {
         clw_fail_hard_on_error(clEnqueueReadBuffer(
             m_context.get_cl_command_queue(), m_device_array,
             CL_TRUE /*blocking*/, 0, m_host_array.size() * sizeof(TDevice),
             m_host_array.data(), 0, NULL, NULL));
-      }
-    else {
-      std::cerr
-          << "Warning, you are trying to pull into const memory: ignored.";
-    }
+  }
+
+  const cl_mem& get_device_reference() const{
+    return m_device_array;
   }
 
  private:
   cl_mem m_device_array;
-  std::vector<THost> m_host_array;
+  std::vector<TInternal> m_host_array;
   const clw_context& m_context;
 };

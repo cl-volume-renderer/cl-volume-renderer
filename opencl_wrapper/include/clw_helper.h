@@ -3,10 +3,14 @@
 #include <iostream>
 #include <string>
 
+//I know it is evil :)
+#define clw_fail_hard_on_error(val) h__clw_fail_hard_on_error_message(val, __FILE__,  __PRETTY_FUNCTION__, __LINE__)
+
+
 /// If non CL_SUCESS is passed, we print the error code and fail hard
 ///@param status the return value of a OpenCL value that will be checked
-static void clw_fail_hard_on_error(cl_int status) {
-  if (status == CL_SUCCESS) return;
+static std::string h__get_warning_message(cl_int status) {
+  if (status == CL_SUCCESS) return "CL_SUCCESS";
   std::string warning_message;
 
   switch (status) {
@@ -280,9 +284,24 @@ static void clw_fail_hard_on_error(cl_int status) {
       break;
   }
 
+
+  return warning_message;
+}
+
+static void h__clw_fail_hard_on_error_message(cl_int status,std::string file, std::string function, int line){
+  if (status == CL_SUCCESS) return;
 	std::cerr << "WARNING OpenCL call failed. See error message:\n";
-	std::cerr << warning_message << '\n';
+  std::cerr << "Failed Call Info: \n";
+  std::cerr << "---------------------------------------\n";
+  std::cerr << "\033[1;31m";
+  std::cerr << "File      : " << file << '\n';
+  std::cerr << "Function  : " << function << '\n';
+  std::cerr << "Line      : " << line << '\n';
+  std::cerr << "Error Msg : " << h__get_warning_message(status) << '\n';
+  std::cerr << "\033[0m";
+
+  std::cerr << "---------------------------------------\n";
 	std::cerr << "Exiting application... \n";
 
-	exit(1);
+  exit(1);
 }
