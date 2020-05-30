@@ -10,7 +10,7 @@
 
 static const GLubyte emptyData[] = {100, 100, 100, 255};
 
-Ui::Ui() {
+ui::ui() {
   GLuint texture[1];
 
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -42,7 +42,7 @@ Ui::Ui() {
   ImGui_ImplOpenGL2_Init();
 }
 
-Ui::~Ui() {
+ui::~ui() {
   ImGui_ImplOpenGL2_Shutdown();
   ImGui_ImplSDL2_Shutdown();
   ImGui::DestroyContext();
@@ -52,15 +52,15 @@ Ui::~Ui() {
   SDL_Quit();
 }
 
-void * Ui::gl_context_get(void) {
+void * ui::gl_context_get(void) {
   return gl_context;
 }
 
-const GLuint Ui::frametexture_get(void) {
+const GLuint ui::frametexture_get(void) {
   return frametexture;
 }
 
-void Ui::run(void) {
+void ui::run(void) {
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     bool done = false;
     ImGuiIO& io = ImGui::GetIO();

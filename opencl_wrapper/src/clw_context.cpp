@@ -13,7 +13,7 @@ const std::vector<cl_platform_id> get_platforms(){
     std::cerr << "Error, no OpenCL platform detected.\n";
     exit(1);
   }
-  
+
   std::vector<cl_platform_id> platform_ids(platform_id_count);
   clw_fail_hard_on_error(clGetPlatformIDs(platform_id_count, platform_ids.data(), NULL));
   return platform_ids;
@@ -29,14 +29,14 @@ const std::vector<cl_device_id> get_devices(const cl_platform_id platform){
     std::cerr << "Error, no OpenCL device detected.\n";
     exit(1);
   }
-  
+
   std::vector<cl_device_id> device_ids(device_id_count);
   clw_fail_hard_on_error(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, device_id_count, device_ids.data(), NULL));
   return device_ids;
 }
 
 clw_context::clw_context(){
-  cl_int error; 
+  cl_int error;
   auto platforms = get_platforms();
   auto devices = get_devices(platforms[0]);
   const auto device_to_use = 0;

@@ -3,8 +3,8 @@
 #include "ui.h"
 
 int main(){
-  Ui ui = Ui();
-  clw_context ctx = clw_context(ui.gl_context_get());
-  ui.run();
+  ui ui_ctx = ui();
+  clw_context ctx = clw_context(ui_ctx.gl_context_get());
+  ui_ctx.run();
   return 0;
 }

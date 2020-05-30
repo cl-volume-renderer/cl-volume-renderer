@@ -4,14 +4,14 @@
 #include <imgui_impl_sdl.h>
 #include <imgui_impl_opengl2.h>
 
-class Ui {
+class ui {
   private:
   SDL_Window *window;
   SDL_GLContext gl_context;
   GLuint frametexture;
   public:
-    Ui();
-    ~Ui();
+    ui();
+    ~ui();
     void run(void);
     const GLuint frametexture_get(void);
     void * gl_context_get(void);
