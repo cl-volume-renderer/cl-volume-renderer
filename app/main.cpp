@@ -9,7 +9,7 @@ int main(){
 
   std::vector<unsigned char> output = std::vector<unsigned char >(128*128*4);
   ui ui_ctx = ui();
-  clw_context ctx = clw_context(ui_ctx.gl_context_get());
+  clw_context ctx = clw_context();
   clw_vector<unsigned char> my_vec(ctx, std::move(output));
   clw_function my_func(ctx, "hello_world.cl", "render_pixels");
   my_func.run<128, 128, 8, 8>(my_vec, 128, 128);
