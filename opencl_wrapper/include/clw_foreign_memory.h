@@ -12,8 +12,8 @@ class clw_foreign_memory {
   clw_foreign_memory(const clw_context& context, GLuint texture, GLenum texture_target = GL_TEXTURE_2D, GLint mip_level = 0)
       : m_context(context) {
     cl_int error;
-    
-    clCreateFromGLTexture(context.get_cl_context(), CL_MEM_WRITE_ONLY, texture_target, mip_level, texture,&error);
+
+    m_foreign_array = clCreateFromGLTexture(context.get_cl_context(), CL_MEM_WRITE_ONLY, texture_target, mip_level, texture,&error);
     clw_fail_hard_on_error(error);
   }
 
