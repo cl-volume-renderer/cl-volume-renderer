@@ -38,7 +38,7 @@ class clw_image {
     };
 
     constexpr const auto eval_image_format = [&](){
-      cl_image_format format;
+      cl_image_format format{0};
       format.image_channel_order = CL_R; 
       constexpr bool is_signed = std::is_signed<TDevice>::value;
       constexpr size_t type_size = sizeof(TDevice);
@@ -51,7 +51,7 @@ class clw_image {
           }else if(type_size == 2){
             format.image_channel_data_type = CL_SIGNED_INT16; 
           }else{
-            return CL_SIGNED_INT32;
+            format.image_channel_data_type = CL_SIGNED_INT32;
           }
         }else{
           if constexpr(type_size == 1){
@@ -69,23 +69,25 @@ class clw_image {
       return format;
     };
 
-    constexpr const auto eval_image_desc = [&](){
-      cl_image_desc desc;
-      desc.image_type = eval_image_type();
+    constexpr const auto eval_image_desc = [&](auto image_type){
+      cl_image_desc desc{0};
+      desc.image_type = image_type;
       desc.image_width = Width;
       desc.image_height = Height;
       desc.image_depth = Depth;
+      desc.image_array_size = 1;
       desc.image_row_pitch = 0; //TODO correct?
       desc.image_slice_pitch = 0; //TODO correct?
       desc.num_mip_levels = 0;
       desc.num_samples = 0;
       desc.buffer = NULL; //TODO correct?
+      return desc;
     };
 
     constexpr const auto image_type =              eval_image_type();
     constexpr const auto access_right =            eval_access_right();
     constexpr const cl_image_format image_format = eval_image_format();
-    constexpr const cl_image_desc   image_desc =   eval_image_desc();
+    constexpr const cl_image_desc   image_desc =   eval_image_desc(image_type);
    
     m_device_array = clCreateImage(context.get_cl_context(), access_right, &image_format, &image_desc, NULL, &error);
     clw_fail_hard_on_error(error);
