@@ -30,7 +30,20 @@ class clw_function{
     clw_fail_hard_on_error(error);
 
     error = clBuildProgram(m_program, 0, NULL, "-cl-mad-enable", NULL, NULL);
+    if(error != CL_SUCCESS){
+      //Failed, print the error log
+      std::cout << "Kernel failed to compile:\n"; 
+      std::array<char, 4096> buffer;
+      error = clGetProgramBuildInfo(m_program, m_context.get_cl_device_id(), CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer.data(), NULL);
+      std::cout << "---------------------------------------\n";
+      std::cout << "\033[1;33m" << buffer.data() << "\033[0m" << '\n';
+      std::cout << "---------------------------------------\n";
+      clw_fail_hard_on_error(error);
+    }
     clw_fail_hard_on_error(error);
+
+    cl_build_status build_status;
+    error = clGetProgramBuildInfo(m_program, m_context.get_cl_device_id(), CL_PROGRAM_BUILD_STATUS, sizeof(cl_build_status), &build_status, NULL);
 
     m_kernel = clCreateKernel(m_program, function_name.data(), NULL);
     clw_fail_hard_on_error(error);

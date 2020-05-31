@@ -44,6 +44,7 @@ clw_context::clw_context(){
   m_context = clCreateContext(0,1,&devices[device_to_use], NULL, NULL, &error);
   clw_fail_hard_on_error(error);
   m_command_queue = clCreateCommandQueue(m_context, devices[device_to_use], CL_QUEUE_PROFILING_ENABLE, &error);
+  m_device_id = devices[device_to_use];
 }
 
 clw_context::clw_context(void * gl_context){
@@ -62,6 +63,7 @@ clw_context::clw_context(void * gl_context){
   m_context = clCreateContext(properties.data(),1,&devices[device_to_use], NULL, NULL, &error);
   clw_fail_hard_on_error(error);
   m_command_queue = clCreateCommandQueue(m_context, devices[device_to_use], CL_QUEUE_PROFILING_ENABLE, &error);
+  m_device_id = devices[device_to_use];
 }
 
 clw_context::~clw_context(){
@@ -74,4 +76,8 @@ const cl_context clw_context::get_cl_context() const{
 
 const cl_command_queue clw_context::get_cl_command_queue() const{
   return m_command_queue;
+}
+
+const cl_device_id clw_context::get_cl_device_id() const{
+  return m_device_id;
 }

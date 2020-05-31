@@ -19,8 +19,10 @@ class clw_context{
 
   const cl_context get_cl_context() const;
   const cl_command_queue get_cl_command_queue() const;
+  const cl_device_id get_cl_device_id() const;
 
   private:
   cl_context m_context;
   cl_command_queue m_command_queue;
+  cl_device_id m_device_id;
 };
