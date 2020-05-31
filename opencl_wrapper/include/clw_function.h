@@ -71,17 +71,46 @@ class clw_function{
 
   }
 
-  template <size_t GlobalSize, size_t LocalSize, typename ...Args>
+  /// @tparam GX the global X size
+  /// @tparam GY the global Y size
+  /// @tparam GZ the global Z size
+  /// @tparam LX the local Y size
+  /// @tparam LY the local Y size
+  /// @tparam LZ the local Z size
+  template <size_t GX, size_t GY, size_t GZ, size_t LX, size_t LY, size_t LZ, typename ...Args>
   void run(const Args&... arg) const{
+    static_assert(GX >= LX, "Error, global size x < local_size x.");
+    static_assert(GY >= LY, "Error, global size y < local size y.");
+    static_assert(GZ >= LZ, "Error, global size z < local size z.");
+    static_assert((GX % LX) == 0, "Error, global size x is not a multiple of local size x.");
+    static_assert((GY % LY) == 0, "Error, global size y is not a multiple of local size y.");
+    static_assert((GZ % LZ) == 0, "Error, global size z is not a multiple of local size z.");
     recurse_helper<0>(arg...);
     cl_int error;
     
-    constexpr const size_t global_size = GlobalSize;
-    constexpr const size_t local_size = LocalSize;
-    error = clEnqueueNDRangeKernel(m_context.get_cl_command_queue(), m_kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+    constexpr const std::array<size_t, 3> global_size{GX, GY, GZ};
+    constexpr const std::array<size_t, 3> local_size{GX, GY, GZ};
+    error = clEnqueueNDRangeKernel(m_context.get_cl_command_queue(), m_kernel, global_size.size(), NULL, global_size.data(), local_size.data(), 0, NULL, NULL);
 
     //clFinish(m_context.get_cl_command_queue());
     clw_fail_hard_on_error(error);
+  }
+
+  /// @tparam GX the global X size
+  /// @tparam GY the global Y size
+  /// @tparam LX the local Y size
+  /// @tparam LY the local Y size
+  template <size_t GX, size_t GY, size_t LX, size_t LY, typename ...Args>
+  void run(const Args&... arg) const{
+    run<GX,GY,1,LX,LY,1>(arg...);
+  }
+
+
+  /// @tparam GX the global X size
+  /// @tparam LX the local Y size
+  template <size_t GX, size_t LX, typename ...Args>
+  void run(const Args&... arg) const{
+    run<GX,1,1,LX,1,1>(arg...);
   }
 
 private:
