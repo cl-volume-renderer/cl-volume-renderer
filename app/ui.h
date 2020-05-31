@@ -15,4 +15,5 @@ class ui {
     void run(void);
     const GLuint frametexture_get(void);
     void * gl_context_get(void);
+    void frametexture_fill(unsigned int width, unsigned int height, const void *data);
 };

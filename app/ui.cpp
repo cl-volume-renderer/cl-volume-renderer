@@ -8,7 +8,7 @@
 #include <imgui_impl_opengl2.cpp>
 #include <imgui_impl_sdl.cpp>
 
-static const GLubyte emptyData[] = {100, 100, 100, 255};
+static const GLubyte emptyData[] = {0, 0, 0, 250};
 
 ui::ui() {
   GLuint texture[1];
@@ -33,8 +33,9 @@ ui::ui() {
   //create texture for opencl for now we are filling that here with a empty color, so we dont have gargabe later.
   glGenTextures(1, texture);
   frametexture = texture[0];
-  glBindTexture(GL_TEXTURE_2D, frametexture);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, emptyData);
+  frametexture_fill(2, 2, emptyData);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
@@ -58,6 +59,14 @@ void * ui::gl_context_get(void) {
 
 const GLuint ui::frametexture_get(void) {
   return frametexture;
+}
+
+void ui::frametexture_fill(unsigned int width, unsigned int height, const void *data)
+{
+  glBindTexture(GL_TEXTURE_2D, frametexture);
+  printf("%d\n", glGetError());
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+  printf("%d\n", glGetError());
 }
 
 void ui::run(void) {
@@ -88,14 +97,15 @@ void ui::run(void) {
         glClear(GL_COLOR_BUFFER_BIT);
 
         //draw the image rendered in opencl
-        glBindTexture(GL_TEXTURE_2D, frametexture);
         glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, frametexture);
         glBegin(GL_QUADS);
         glTexCoord2f(0, 0); glVertex2f(-1, -1);
         glTexCoord2f(0, 1); glVertex2f(-1, 1);
         glTexCoord2f(1, 1); glVertex2f(1, 1);
         glTexCoord2f(1, 0); glVertex2f(1, -1);
         glEnd();
+        glDisable(GL_TEXTURE_2D);
 
         //draw imgui
         ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
