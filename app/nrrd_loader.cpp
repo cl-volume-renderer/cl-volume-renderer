@@ -7,9 +7,6 @@
 #include <string>
 #include <vector>
 
-// Size of read-chunk
-constexpr const auto chunck_size = 256000;
-
 // Keys for key/value parsing
 constexpr const auto type_key = "type";
 constexpr const auto size_key = "sizes";
@@ -23,6 +20,11 @@ nrrd_header nrrd_loader::load_header(std::string path) {
 
   std::ifstream input_file;
   input_file.open(path, std::ios::in | std::ios::binary);
+  if(input_file.fail()){
+    std::cerr << "Error, failed to open .nrrd file: " << path << '\n';
+    exit(1);
+  }
+
   std::string line = "";
 
   while (std::getline(input_file, line)) {
@@ -155,7 +157,7 @@ void nrrd_loader::tokenise(std::string const &s, const char delimeter,
 
   std::string tmp_string;
   while (std::getline(ss, tmp_string, delimeter)) {
-    out.push_back(s);
+    out.push_back(tmp_string);
   }
 }
 // Inflates GZIP encoded data
