@@ -89,7 +89,7 @@ class clw_function{
     cl_int error;
     
     constexpr const std::array<size_t, 3> global_size{GX, GY, GZ};
-    constexpr const std::array<size_t, 3> local_size{GX, GY, GZ};
+    constexpr const std::array<size_t, 3> local_size{LX, LY, LZ};
     error = clEnqueueNDRangeKernel(m_context.get_cl_command_queue(), m_kernel, global_size.size(), NULL, global_size.data(), local_size.data(), 0, NULL, NULL);
 
     //clFinish(m_context.get_cl_command_queue());
