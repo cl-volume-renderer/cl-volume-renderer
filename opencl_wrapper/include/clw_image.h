@@ -124,17 +124,19 @@ class clw_image {
 
   /// Pushes host data to device
   void push() const{
-    clw_fail_hard_on_error(clEnqueueWriteBuffer(
+    std::array<size_t, 3> origin{0,0,0};
+    std::array<size_t, 3> region{m_dimensions[0],m_dimensions[1],m_dimensions[2]};
+    clw_fail_hard_on_error(clEnqueueWriteImage(
         m_context.get_cl_command_queue(), m_device_array, CL_TRUE /*blocking*/,
-        0, m_host_array.size() * sizeof(TDevice), m_host_array.data(), 0,
-        NULL, NULL));
+        origin.data(),region.data(),0,0,m_host_array.data(),0,NULL,NULL));
   }
   /// Pulls device data
   void pull() {
-        clw_fail_hard_on_error(clEnqueueReadBuffer(
-            m_context.get_cl_command_queue(), m_device_array,
-            CL_TRUE /*blocking*/, 0, m_host_array.size() * sizeof(TDevice),
-            m_host_array.data(), 0, NULL, NULL));
+    std::array<size_t, 3> origin{0,0,0};
+    std::array<size_t, 3> region{m_dimensions[0],m_dimensions[1],m_dimensions[2]};
+    clw_fail_hard_on_error(clEnqueueReadImage(
+        m_context.get_cl_command_queue(), m_device_array, CL_TRUE /*blocking*/,
+        origin.data(),region.data(),0,0,m_host_array.data(),0,NULL,NULL));
   }
 
   /// Returns a reference to the internal opencl object
