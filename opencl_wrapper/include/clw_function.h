@@ -1,6 +1,8 @@
 #pragma once
 #include <CL/cl.h>
+#include <cassert>
 #include <cstddef>
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <type_traits>
@@ -91,7 +93,7 @@ class clw_function{
   /// @tparam LY the local Y size
   /// @tparam LZ the local Z size
   template <size_t GX, size_t GY, size_t GZ, size_t LX, size_t LY, size_t LZ, typename ...Args>
-  void run(const Args&... arg) const{
+  [[deprecated("Use 'execute(...) instead'")]] void run(const Args&... arg) const{
     static_assert(GX >= LX, "Error, global size x < local_size x.");
     static_assert(GY >= LY, "Error, global size y < local size y.");
     static_assert(GZ >= LZ, "Error, global size z < local size z.");
@@ -114,7 +116,7 @@ class clw_function{
   /// @tparam LX the local Y size
   /// @tparam LY the local Y size
   template <size_t GX, size_t GY, size_t LX, size_t LY, typename ...Args>
-  void run(const Args&... arg) const{
+  [[deprecated("Use 'execute(...) instead'")]] void run(const Args&... arg) const{
     run<GX,GY,1,LX,LY,1>(arg...);
   }
 
@@ -122,8 +124,38 @@ class clw_function{
   /// @tparam GX the global X size
   /// @tparam LX the local Y size
   template <size_t GX, size_t LX, typename ...Args>
-  void run(const Args&... arg) const{
+  [[deprecated("Use 'execute(...) instead'")]] void run(const Args&... arg) const{
     run<GX,1,1,LX,1,1>(arg...);
+  }
+
+
+  /// @param global_size a vector representing the global size, it is suggested
+  //         to use initilizer_lists, example: 1D: {256}, 2D: {256,128} or 3D: {256,128,512}
+  /// @param local_size a vector representing the local size
+  //         to use initilizer_lists, example: 1D: {64}, 2D: {8,8} or 3D: {4,4,4}
+  template<typename ...Args>
+  constexpr void execute(std::array<size_t, 3> global_size, std::array<size_t, 3> local_size, const Args&... arg) const{
+    //Ensure that OpenCL does not cause issues with work_sizes of 0
+    constexpr auto remove_zero = [](auto& array){
+      for (auto& val : array){
+        if(val == 0) val = 1;
+      }
+    };
+    remove_zero(global_size);
+    remove_zero(local_size);
+
+    assert(global_size[0] >= local_size[0]); //Error, global size x < local_size x.
+    assert(global_size[1] >= local_size[1]); //Error, global size y < local_size y.
+    assert(global_size[2] >= local_size[2]); //Error, global size z < local_size z.
+    assert((global_size[0] % local_size[0]) == 0); //Error, global size x is not a multiple of local size x
+    assert((global_size[1] % local_size[1]) == 0); //Error, global size y is not a multiple of local size y
+    assert((global_size[2] % local_size[2]) == 0); //Error, global size z is not a multiple of local size z
+
+    recurse_helper<0>(arg...);
+    cl_int error{0};
+    error = clEnqueueNDRangeKernel(m_context.get_cl_command_queue(), m_kernel, global_size.size(), NULL, global_size.data(), local_size.data(), 0, NULL, NULL);
+    //clFinish(m_context.get_cl_command_queue());
+    clw_fail_hard_on_error(error);
   }
 
 private:
