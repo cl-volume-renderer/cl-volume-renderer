@@ -3,29 +3,37 @@
 #include <iostream>
 #include <type_traits>
 #include <vector>
+#include <array>
 #include "clw_context.h"
 #include "clw_helper.h"
 
-template <typename TDevice, size_t Width, size_t Height = 0, size_t Depth = 0>
+template <typename TDevice>
 class clw_image {
   using TInternal = typename std::remove_const<TDevice>::type;
  public:
-  clw_image(const clw_context& context, std::vector<TInternal>&& data)
-      : m_context(context) {
-    cl_int error;
+  constexpr clw_image(const clw_context& context, std::vector<TInternal>&& data, const std::array<size_t, 3>& dimensions)
+      : m_context(context), m_dimensions(dimensions) {
+    cl_int error{0};
     m_host_array = data;
 
-    constexpr const auto eval_image_type = [&](){
-      static_assert(Width > 0 && Height >= 0 && Depth >= 0, "Invalid image size.");
-      if constexpr(Width > 0 && Height == 0 && Depth == 0){
+    const auto width = dimensions[0];
+    const auto height = dimensions[1];
+    const auto depth = dimensions[2];
+
+    const auto eval_image_type = [&](){
+      if(!(width > 0 && height >= 0 && depth >= 0)){
+        std::cerr << "Error, image size is not valid \n";
+        exit(1);
+      }
+      if(width > 0 && height == 0 && depth == 0){
         return CL_MEM_OBJECT_IMAGE1D;
-      }else if    (Width > 0 && Height > 0 && Depth == 0){
+      }else if    (width > 0 && height > 0 && depth == 0){
         return CL_MEM_OBJECT_IMAGE2D; 
-      }else if    (Width > 0 && Height > 0 && Depth > 0){
+      }else if    (width > 0 && height > 0 && depth > 0){
         return CL_MEM_OBJECT_IMAGE3D; 
       }else{
-        // If we have a 3D image, the middle value can not be 0
-        static_assert(Width > 0 && Height != 0 && Depth > 0, "Invalid image size.");
+        std::cerr << "Error, image size is not valid \n";
+        exit(1);
       }
     };
     
@@ -36,7 +44,6 @@ class clw_image {
         return CL_MEM_READ_WRITE;
       }
     };
-
     constexpr const auto eval_image_format = [&](){
       cl_image_format format{0};
       format.image_channel_order = CL_R; 
@@ -69,12 +76,12 @@ class clw_image {
       return format;
     };
 
-    constexpr const auto eval_image_desc = [&](auto image_type){
+    const auto eval_image_desc = [&](const auto image_type){
       cl_image_desc desc{0};
       desc.image_type = image_type;
-      desc.image_width = Width;
-      desc.image_height = Height;
-      desc.image_depth = Depth;
+      desc.image_width = width;
+      desc.image_height = height;
+      desc.image_depth = depth;
       desc.image_array_size = 1;
       desc.image_row_pitch = 0; //TODO correct?
       desc.image_slice_pitch = 0; //TODO correct?
@@ -84,10 +91,10 @@ class clw_image {
       return desc;
     };
 
-    constexpr const auto image_type =              eval_image_type();
-    constexpr const auto access_right =            eval_access_right();
-    constexpr const cl_image_format image_format = eval_image_format();
-    constexpr const cl_image_desc   image_desc =   eval_image_desc(image_type);
+    const auto image_type =              eval_image_type();
+    const auto access_right =            eval_access_right();
+    const cl_image_format image_format = eval_image_format();
+    const cl_image_desc   image_desc =   eval_image_desc(image_type);
    
     m_device_array = clCreateImage(context.get_cl_context(), access_right, &image_format, &image_desc, NULL, &error);
     clw_fail_hard_on_error(error);
@@ -140,8 +147,14 @@ class clw_image {
     return m_host_array.size();
   }
 
+  /// Returns the dimensions of the image
+  const std::array<size_t,3>& get_dimensions(){
+    return m_dimensions;
+  }
+
  private:
   cl_mem m_device_array;
   std::vector<TInternal> m_host_array;
   const clw_context& m_context;
+  const std::array<size_t, 3> m_dimensions;
 };
