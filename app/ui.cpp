@@ -1,5 +1,6 @@
 #include "ui.h"
 #include <SDL.h>
+#include <string>
 #include <SDL_opengl.h>
 #include <imgui_impl_sdl.h>
 #include <imgui_impl_opengl2.h>
@@ -69,11 +70,52 @@ void ui::frametexture_fill(unsigned int width, unsigned int height, const void *
   printf("%d\n", glGetError());
 }
 
+static void
+keysymbol_handle(struct ui_state *state, std::string key)
+{
+  if (key == "A") {
+    //left
+    state->position[0] -= 0.1f;
+  } else if (key == "S") {
+    //back
+    state->position[1] -= 0.1f;
+  } else if (key == "D") {
+    //right
+    state->position[0] += 0.1f;
+  } else if (key == "Q") {
+    //up
+    state->position[2] += 1.0f;
+  } else if (key == "E") {
+    //down
+    state->position[2] -= 1.0f;
+  } else if (key == "W") {
+    //forward
+    state->position[1] += 0.1f;
+  } else if (key == "Up") {
+    //cam down
+    state->direction_look[1] += 0.1f;
+  } else if (key == "Down") {
+    //cam up
+    state->direction_look[1] -= 0.1f;
+  } else if (key == "Right") {
+    //cam right
+    state->direction_look[0] += 0.1f;
+  } else if (key == "Left") {
+    //cam left
+    state->direction_look[0] -= 0.1f;
+  } else {
+    return;
+  }
+  state->changed = true;
+  state->direction_look[0] = fmod(state->direction_look[0], 2*M_PI);
+  state->direction_look[1] = fmod(state->direction_look[1], 2*M_PI);
+}
+
 void ui::run(frame_emitter *emitter) {
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     bool done = false;
     ImGuiIO& io = ImGui::GetIO();
-    struct ui_state state = {0, 0, true};
+    struct ui_state state = {0, 0, {0,0,0}, {0, 0}, true};
     SDL_GetWindowSize(window, &state.width, &state.height); //We have a fixed window, so that is enough
 
     while (!done) {
@@ -83,6 +125,8 @@ void ui::run(frame_emitter *emitter) {
             ImGui_ImplSDL2_ProcessEvent(&event);
             if (event.type == SDL_QUIT)
                 done = true;
+            if (event.type == SDL_KEYDOWN)
+              keysymbol_handle(&state, SDL_GetKeyName(event.key.keysym.sym));
         }
         ImGui_ImplOpenGL2_NewFrame();
         ImGui_ImplSDL2_NewFrame(window);

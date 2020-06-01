@@ -7,6 +7,10 @@
 struct ui_state{
    int height;
    int width;
+
+   float position[3];
+   float direction_look[2];
+
    bool changed;
 };
 
