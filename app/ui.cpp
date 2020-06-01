@@ -69,12 +69,15 @@ void ui::frametexture_fill(unsigned int width, unsigned int height, const void *
   printf("%d\n", glGetError());
 }
 
-void ui::run(void) {
+void ui::run(frame_emitter *emitter) {
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     bool done = false;
     ImGuiIO& io = ImGui::GetIO();
+    struct ui_state state = {0, 0, true};
+    SDL_GetWindowSize(window, &state.width, &state.height); //We have a fixed window, so that is enough
 
     while (!done) {
+        bool frame_changed;
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             ImGui_ImplSDL2_ProcessEvent(&event);
@@ -95,6 +98,10 @@ void ui::run(void) {
         glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        void *framedata = emitter->render_frame(state, frame_changed);
+        if (frame_changed)
+          frametexture_fill(state.width, state.height, framedata);
 
         //draw the image rendered in opencl
         glEnable(GL_TEXTURE_2D);

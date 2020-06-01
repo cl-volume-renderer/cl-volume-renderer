@@ -4,6 +4,18 @@
 #include <imgui_impl_sdl.h>
 #include <imgui_impl_opengl2.h>
 
+struct ui_state{
+   int height;
+   int width;
+   bool changed;
+};
+
+class frame_emitter {
+  public:
+    virtual ~frame_emitter() { };
+    virtual void* render_frame(struct ui_state &state, bool &frame_changed) = 0;
+};
+
 class ui {
   private:
   SDL_Window *window;
@@ -12,7 +24,7 @@ class ui {
   public:
     ui();
     ~ui();
-    void run(void);
+    void run(frame_emitter *emitter);
     const GLuint frametexture_get(void);
     void * gl_context_get(void);
     void frametexture_fill(unsigned int width, unsigned int height, const void *data);
