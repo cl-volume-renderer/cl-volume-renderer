@@ -122,7 +122,7 @@ void ui::run(frame_emitter *emitter) {
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     bool done = false;
     ImGuiIO& io = ImGui::GetIO();
-    struct ui_state state = {path, true, 0, 0, {0,0,0}, {0, 0}, true};
+    struct ui_state state = {path, true, 0, 0, {-200,200,-200}, {0, 0}, true};
     SDL_GetWindowSize(window, &state.width, &state.height); //We have a fixed window, so that is enough
     snprintf(file_path, 1024, "%s", path.c_str());
     nrrd_loader loader;
