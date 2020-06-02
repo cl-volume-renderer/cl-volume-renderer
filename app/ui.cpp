@@ -71,32 +71,43 @@ void ui::frametexture_fill(unsigned int width, unsigned int height, const void *
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 }
 
+#define STEP_SIZE 1.0f
+
 static void
-keysymbol_handle(struct ui_state *state, std::string key)
+keysymbol_handle(struct ui_state *state, std::string key, Uint16 mod)
 {
+  float step_size_pos = 1.0f;
+  float step_size_dir = 0.1f;
+
+  if (mod & KMOD_LSHIFT || mod & KMOD_RSHIFT)
+    step_size_pos = 5.0f;
+
+  if (mod & KMOD_LCTRL || mod & KMOD_RCTRL)
+    step_size_pos = 0.1f;
+
   if        (key == "W") {
-    state->position[0] += 0.1f;
+    state->position[0] += step_size_pos;
   } else if (key == "S") {
-    state->position[0] -= 0.1f;
+    state->position[0] -= step_size_pos;
   } else if (key == "A") {
-    state->position[2] -= 0.1f;
+    state->position[2] += step_size_pos;
   } else if (key == "D") {
-    state->position[2] += 0.1f;
+    state->position[2] -= step_size_pos;
   } else if (key == "E") {
-    state->position[1] += 0.1f;
+    state->position[1] += step_size_pos;
   } else if (key == "Q") {
-    state->position[1] -= 0.1f;
+    state->position[1] -= step_size_pos;
   } else if (key == "Up") {
-    state->direction_look[1] += 0.1f;
+    state->direction_look[1] += step_size_dir;
   } else if (key == "Down") {
     //cam up
-    state->direction_look[1] -= 0.1f;
+    state->direction_look[1] -= step_size_dir;
   } else if (key == "Right") {
     //cam right
-    state->direction_look[0] += 0.1f;
+    state->direction_look[0] += step_size_dir;
   } else if (key == "Left") {
     //cam left
-    state->direction_look[0] -= 0.1f;
+    state->direction_look[0] -= step_size_dir;
   } else {
     return;
   }
@@ -124,7 +135,7 @@ void ui::run(frame_emitter *emitter) {
         while (SDL_PollEvent(&event)) {
             if (ImGui_ImplSDL2_ProcessEvent(&event)) {
               if (event.type == SDL_KEYDOWN)
-                keysymbol_handle(&state, SDL_GetKeyName(event.key.keysym.sym));
+                keysymbol_handle(&state, SDL_GetKeyName(event.key.keysym.sym), event.key.keysym.mod);
             }
             if (event.type == SDL_QUIT)
               done = true;
