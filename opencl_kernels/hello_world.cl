@@ -10,7 +10,7 @@ __kernel void render_pixels(__global uchar* out, int width, int height)
   unsigned int y = get_global_id(1);
   if (x < width && y < height) {
     unsigned int point = (x + y*width)*4;
-    if(x % 2 == 0){
+    if((x/5) % 2 == 0){
       out[point + 0] = 255;
       out[point + 1] = 0;
       out[point + 2] = 0;

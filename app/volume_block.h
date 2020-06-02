@@ -3,8 +3,7 @@
 #include <string>
 
 //A block of voxels with a fixed width, height and length
-class volume_block {
-  private:
+struct volume_block {
   std::vector<short> m_voxels;
   const unsigned int m_voxel_count_x;
   const unsigned int m_voxel_count_y;
@@ -13,7 +12,6 @@ class volume_block {
   const float m_voxel_size_y;
   const float m_voxel_size_z;
 
-  public:
   ///Create an "empty" volume block.
   ///@param voxel_count_x the number of voxels on the x axis
   ///@param voxel_count_y the number of voxels on the y axis
