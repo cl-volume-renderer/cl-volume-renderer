@@ -65,11 +65,11 @@ __kernel void render(__write_only image2d_t frame, __read_only image3d_t referen
   unsigned int x = get_global_id(0);
   unsigned int y = get_global_id(1);
   int2 pos = {x, y};
-  
-  struct ray camera = {{-100,0,0},{1,0,0}};
+
+  struct ray camera = {{-100+cam_dir_x,0+cam_dir_y,-100+cam_dir_z},{-0.707+cam_pos_y,0,-0.707+cam_pos_x}};
   struct ray vray = generate_ray(camera, x,y,get_image_width(frame), get_image_height(frame));
   struct cut_result cut_result = cut(reference_volume, vray);
-  //uint4 color = {255*vray.direction.x, 255*vray.direction.y, cut_result.cut_point.z, 255};
-  uint4 color = {0, 0, cut_result.cut_point.z, 255};
+  uint4 color = {cut_result.cut_point.x, cut_result.cut_point.y, cut_result.cut_point.z,255};
+
   write_imageui(frame, pos, color);
 }
