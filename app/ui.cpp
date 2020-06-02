@@ -76,26 +76,19 @@ void ui::frametexture_fill(unsigned int width, unsigned int height, const void *
 static void
 keysymbol_handle(struct ui_state *state, std::string key)
 {
-  if (key == "A") {
-    //left
-    state->position[0] -= 0.1f;
-  } else if (key == "S") {
-    //back
-    state->position[1] -= 0.1f;
-  } else if (key == "D") {
-    //right
+  if        (key == "W") {
     state->position[0] += 0.1f;
-  } else if (key == "Q") {
-    //up
-    state->position[2] += 1.0f;
+  } else if (key == "S") {
+    state->position[0] -= 0.1f;
+  } else if (key == "A") {
+    state->position[2] -= 0.1f;
+  } else if (key == "D") {
+    state->position[2] += 0.1f;
   } else if (key == "E") {
-    //down
-    state->position[2] -= 1.0f;
-  } else if (key == "W") {
-    //forward
     state->position[1] += 0.1f;
+  } else if (key == "Q") {
+    state->position[1] -= 0.1f;
   } else if (key == "Up") {
-    //cam down
     state->direction_look[1] += 0.1f;
   } else if (key == "Down") {
     //cam up
