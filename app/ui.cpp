@@ -104,10 +104,10 @@ keysymbol_handle(struct ui_state *state, std::string key, Uint16 mod)
     state->direction_look[1] -= step_size_dir;
   } else if (key == "Right") {
     //cam right
-    state->direction_look[0] += step_size_dir;
+    state->direction_look[0] -= step_size_dir;
   } else if (key == "Left") {
     //cam left
-    state->direction_look[0] -= step_size_dir;
+    state->direction_look[0] += step_size_dir;
   } else {
     return;
   }

@@ -16,7 +16,7 @@ struct ui_state{
    int width;
 
    float position[3]; //0->x 1->y 3->z
-   float direction_look[3];
+   float direction_look[2]; //this are two angles that you can adjust
 
    bool cam_changed;
 };

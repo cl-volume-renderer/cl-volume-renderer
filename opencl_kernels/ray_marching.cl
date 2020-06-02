@@ -66,7 +66,8 @@ __kernel void render(__write_only image2d_t frame, __read_only image3d_t referen
   unsigned int y = get_global_id(1);
   int2 pos = {x, y};
 
-  struct ray camera = {{-100+cam_dir_x,0+cam_dir_y,-100+cam_dir_z},{-0.707+cam_pos_y,0,-0.707+cam_pos_x}};
+  struct ray camera = {{cam_pos_x, cam_pos_y, cam_pos_z}, {cam_dir_x, cam_dir_y, cam_dir_z}};
+  //struct ray camera = {{-100,220,-100},{-0.707,0,-0.707}};
   struct ray vray = generate_ray(camera, x,y,get_image_width(frame), get_image_height(frame));
   struct cut_result cut_result = cut(reference_volume, vray);
   uint4 color = {cut_result.cut_point.x, cut_result.cut_point.y, cut_result.cut_point.z,255};

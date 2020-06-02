@@ -40,8 +40,23 @@ void* renderer::render_frame(struct ui_state &state, bool &frame_changed)
   //for now we dont have dynamic frame sizes, so we need to have some assertion that the frame size is not magically changing.
   //assert(frame.size() == state.width * state.height * 4);
 
-  //render_func.execute({(unsigned long)state.width, (unsigned long)state.height}, {8, 8}, frame, state.width, state.height);
-  render_func.execute({(unsigned long)state.width, (unsigned long)state.height}, {8, 8}, frame, *reference_volume, *buffer_volume, state.direction_look[0], state.direction_look[1], state.direction_look[2], state.position[0], state.position[1], state.position[2]);
+  float direction_vector[3] = {
+                cos(state.direction_look[0]) * cos(state.direction_look[1]),
+                sin(state.direction_look[1]),
+                sin(state.direction_look[0]) * cos(state.direction_look[1])
+              };
+
+  float length = sqrtf(pow(direction_vector[0], 2) + pow(direction_vector[1], 2) + pow(direction_vector[2], 2));
+  direction_vector[0] /= length;
+  direction_vector[1] /= length;
+  direction_vector[2] /= length;
+
+  printf("%f %f %f %f\n", direction_vector[0], direction_vector[1], direction_vector[2], sqrtf(pow(direction_vector[0], 2) + pow(direction_vector[1], 2) + pow(direction_vector[2], 2)));
+
+  render_func.execute({(unsigned long)state.width, (unsigned long)state.height}, {8, 8}, frame,
+    *reference_volume, *buffer_volume,
+    state.position[0], state.position[1], state.position[2],
+    direction_vector[0], direction_vector[1], direction_vector[2]);
   frame.pull();
 
   state.cam_changed = false;
