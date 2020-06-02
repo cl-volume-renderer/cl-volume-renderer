@@ -6,7 +6,7 @@ std::vector<short> empty = std::vector<short>(1024*512*4);
 
 renderer::renderer()
 : render_func(ctx, "ray_marching.cl", "render"),
-  frame(ctx, std::move(output), {1024, 512, 1})
+  frame(ctx, std::move(output), {1024, 512})
 {
 
 }
