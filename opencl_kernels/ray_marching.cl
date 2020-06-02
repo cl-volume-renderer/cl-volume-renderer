@@ -66,11 +66,37 @@ __kernel void render(__write_only image2d_t frame, __read_only image3d_t referen
   unsigned int y = get_global_id(1);
   int2 pos = {x, y};
 
+  write_imageui(frame, pos, (uint4){0,0,0,0}); 
+
   struct ray camera = {{cam_pos_x, cam_pos_y, cam_pos_z}, {cam_dir_x, cam_dir_y, cam_dir_z}};
   //struct ray camera = {{-100,220,-100},{-0.707,0,-0.707}};
   struct ray vray = generate_ray(camera, x,y,get_image_width(frame), get_image_height(frame));
   struct cut_result cut_result = cut(reference_volume, vray);
-  uint4 color = {cut_result.cut_point.x, cut_result.cut_point.y, cut_result.cut_point.z,255};
 
-  write_imageui(frame, pos, color);
+   if(!cut_result.cut) return;
+
+  struct ray surface_ray = {cut_result.cut_point, vray.direction};
+  float step_size = 0.5;
+  float acc_value = 0;
+  for(int i = 0; i < 400; ++i){
+    int location_x = surface_ray.origin.x + step_size*surface_ray.direction.x*i;
+    int location_y = surface_ray.origin.y + step_size*surface_ray.direction.y*i;
+    int location_z = surface_ray.origin.z + step_size*surface_ray.direction.z*i;
+
+    int4 location = {location_x, location_y, location_z, 0};
+    int4 value = read_imagei(reference_volume, CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP, location);
+    if(value.x > 0 && value.x < 255)
+    //if(value.x > 800)
+    acc_value += (value.x); 
+
+  }
+  acc_value = (acc_value / 100);
+  
+  uint4 color = {cut_result.cut_point.x, cut_result.cut_point.y, cut_result.cut_point.z,255};
+  color /= 16;
+  color.x += acc_value;
+  color.y += acc_value;
+  color.z += acc_value;
+
+  write_imageui(frame, pos, color); 
 }
