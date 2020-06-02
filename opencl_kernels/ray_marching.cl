@@ -48,16 +48,16 @@ struct ray generate_ray(struct ray camera, int x, int y, int x_total, int y_tota
   const float3 cam_dir = camera.direction;
   const float3 cam_side = normalize(cross(up,cam_dir));
 
-  const float x_f = x;
-  const float y_f = y;
+  const float x_f = x - x_total/2;
+  const float y_f = y - y_total/2;
   
-  const float3 plane_middle = camera.origin + camera.direction;
+  const float3 plane_middle = camera.direction;
   const float aspect_ratio = (float)x_total / (float)y_total;
   const float x_offset = x_f / x_total * aspect_ratio;
   const float y_offset = y_f / y_total;
 
-  const float3 point_on_plane = normalize(plane_middle + x_offset*cam_side + y_offset*up);
-  const struct ray ret = {camera.origin, point_on_plane};
+  const float3 point_on_plane = plane_middle + x_offset*cam_side + y_offset*up;
+  const struct ray ret = {camera.origin, normalize(point_on_plane)};
   return ret;
 }
 
