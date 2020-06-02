@@ -31,10 +31,10 @@ class clw_function{
     m_program = clCreateProgramWithSource(m_context.get_cl_context(), 1, indirection, NULL, &error);
     clw_fail_hard_on_error(error);
 
-    error = clBuildProgram(m_program, 0, NULL, "-cl-mad-enable", NULL, NULL);
+    error = clBuildProgram(m_program, 0, NULL, "-cl-mad-enable -cl-std=CL2.0", NULL, NULL);
     if(error != CL_SUCCESS){
       //Failed, print the error log
-      std::cout << "Kernel failed to compile:\n"; 
+      std::cout << "Kernel failed to compile:\n";
       std::array<char, 4096> buffer;
       error = clGetProgramBuildInfo(m_program, m_context.get_cl_device_id(), CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer.data(), NULL);
       std::cout << "---------------------------------------\n";
