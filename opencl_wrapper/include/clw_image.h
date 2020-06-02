@@ -7,7 +7,7 @@
 #include "clw_context.h"
 #include "clw_helper.h"
 
-template <typename TDevice>
+template <typename TDevice, size_t ChannelSize=1>
 class clw_image {
   using TInternal = typename std::remove_const<TDevice>::type;
  public:
@@ -44,9 +44,22 @@ class clw_image {
         return CL_MEM_READ_WRITE;
       }
     };
+
     constexpr const auto eval_image_format = [&](){
       cl_image_format format{0};
-      format.image_channel_order = CL_R; 
+      
+      if constexpr(ChannelSize == 1){
+        format.image_channel_order = CL_R; 
+      }else if(ChannelSize == 2){
+        format.image_channel_order = CL_RG; 
+      }else if(ChannelSize == 3){
+        format.image_channel_order = CL_RGB; 
+      }else if(ChannelSize == 4){
+        format.image_channel_order = CL_RGBA; 
+      }else{
+        static_assert(ChannelSize < 5 && ChannelSize > 0, "Invalid channel size.");
+      }
+
       constexpr bool is_signed = std::is_signed<TDevice>::value;
       constexpr size_t type_size = sizeof(TDevice);
       constexpr bool is_integral = std::is_integral<TDevice>::value;
@@ -56,7 +69,7 @@ class clw_image {
           if constexpr(type_size == 1){
             format.image_channel_data_type = CL_SIGNED_INT8;
           }else if(type_size == 2){
-            format.image_channel_data_type = CL_SIGNED_INT16; 
+            format.image_channel_data_type = CL_SIGNED_INT16;
           }else{
             format.image_channel_data_type = CL_SIGNED_INT32;
           }
