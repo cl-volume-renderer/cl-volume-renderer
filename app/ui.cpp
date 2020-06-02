@@ -68,9 +68,7 @@ const GLuint ui::frametexture_get(void) {
 void ui::frametexture_fill(unsigned int width, unsigned int height, const void *data)
 {
   glBindTexture(GL_TEXTURE_2D, frametexture);
-  printf("%d\n", glGetError());
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-  printf("%d\n", glGetError());
 }
 
 static void
