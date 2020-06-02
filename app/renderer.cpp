@@ -1,12 +1,12 @@
 #include "renderer.h"
 #include "nrrd_loader.h"
 
-std::vector<unsigned int> output = std::vector<unsigned int>(1024*512);
+std::vector<unsigned char> output = std::vector<unsigned char>(1024*512*4);
 std::vector<short> empty = std::vector<short>(1024*512*4);
 
 renderer::renderer()
 : render_func(ctx, "ray_marching.cl", "render"),
-  frame(ctx, std::move(output), {1024, 512})
+  frame(ctx, std::move(output), {1024, 512,1})
 {
 
 }
