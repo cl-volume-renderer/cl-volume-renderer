@@ -11,25 +11,35 @@ template <typename TDevice, size_t ChannelSize=1>
 class clw_image {
   using TInternal = typename std::remove_const<TDevice>::type;
  public:
-  constexpr clw_image(const clw_context& context, std::vector<TInternal>&& data, const std::array<size_t, 3>& dimensions)
-      : m_context(context), m_dimensions(dimensions) {
+  constexpr clw_image(const clw_context& context, std::vector<TInternal>&& data, std::array<size_t, 3> dimensions)
+      : m_context(context) {
     cl_int error{0};
     m_host_array = data;
+
+		//Ensure that OpenCL does not cause issues with work_sizes of 0
+		constexpr auto remove_zero = [](auto& array){
+			for (auto& val : array){
+				if(val == 0) val = 1;
+			} 
+		};
+		remove_zero(dimensions);
+		m_dimensions = dimensions;
+		
 
     const auto width = dimensions[0];
     const auto height = dimensions[1];
     const auto depth = dimensions[2];
 
     const auto eval_image_type = [&](){
-      if(!(width > 0 && height >= 0 && depth >= 0)){
+      if(!(width > 1 && height >= 1 && depth >= 1)){
         std::cerr << "Error, image size is not valid \n";
         exit(1);
       }
-      if(width > 0 && height == 0 && depth == 0){
+      if(width > 1 && height == 1 && depth == 1){
         return CL_MEM_OBJECT_IMAGE1D;
-      }else if    (width > 0 && height > 0 && depth == 0){
+      }else if    (width > 1 && height > 1 && depth == 1){
         return CL_MEM_OBJECT_IMAGE2D; 
-      }else if    (width > 0 && height > 0 && depth > 0){
+      }else if    (width > 1 && height > 1 && depth > 1){
         return CL_MEM_OBJECT_IMAGE3D; 
       }else{
         std::cerr << "Error, image size is not valid \n";
@@ -52,12 +62,11 @@ class clw_image {
         format.image_channel_order = CL_R; 
       }else if(ChannelSize == 2){
         format.image_channel_order = CL_RG; 
-      }else if(ChannelSize == 3){
-        format.image_channel_order = CL_RGB; 
       }else if(ChannelSize == 4){
         format.image_channel_order = CL_RGBA; 
       }else{
-        static_assert(ChannelSize < 5 && ChannelSize > 0, "Invalid channel size.");
+        //We have no constexpr fail :(
+        static_assert(ChannelSize < 5 && ChannelSize != 3 && ChannelSize > 0, "Invalid channel size.");
       }
 
       constexpr bool is_signed = std::is_signed<TDevice>::value;
@@ -171,5 +180,5 @@ class clw_image {
   cl_mem m_device_array;
   std::vector<TInternal> m_host_array;
   const clw_context& m_context;
-  const std::array<size_t, 3> m_dimensions;
+  std::array<size_t, 3> m_dimensions;
 };
