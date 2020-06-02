@@ -8,11 +8,14 @@
 //including the implementation of the opengl implementation
 #include <imgui_impl_opengl2.cpp>
 #include <imgui_impl_sdl.cpp>
+#include "nrrd_loader.h"
 
 static const GLubyte emptyData[] = {0, 0, 0, 250};
 
-ui::ui() {
+ui::ui(const char *raw_path) {
   GLuint texture[1];
+
+  path = std::string(raw_path);
 
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s", SDL_GetError());
@@ -106,35 +109,56 @@ keysymbol_handle(struct ui_state *state, std::string key)
   } else {
     return;
   }
-  state->changed = true;
+  state->cam_changed = true;
   state->direction_look[0] = fmod(state->direction_look[0], 2*M_PI);
   state->direction_look[1] = fmod(state->direction_look[1], 2*M_PI);
 }
 
 void ui::run(frame_emitter *emitter) {
+
+    char file_path[1024];
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     bool done = false;
     ImGuiIO& io = ImGui::GetIO();
-    struct ui_state state = {0, 0, {0,0,0}, {0, 0}, true};
+    struct ui_state state = {path, true, 0, 0, {0,0,0}, {0, 0}, true};
     SDL_GetWindowSize(window, &state.width, &state.height); //We have a fixed window, so that is enough
+    snprintf(file_path, 1024, "%s", path.c_str());
+    nrrd_loader loader;
+    volume_block v = loader.load_file(path);
+    emitter->image_set(&v);
 
     while (!done) {
         bool frame_changed;
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
-            ImGui_ImplSDL2_ProcessEvent(&event);
+            if (ImGui_ImplSDL2_ProcessEvent(&event)) {
+              if (event.type == SDL_KEYDOWN)
+                keysymbol_handle(&state, SDL_GetKeyName(event.key.keysym.sym));
+            }
             if (event.type == SDL_QUIT)
-                done = true;
-            if (event.type == SDL_KEYDOWN)
-              keysymbol_handle(&state, SDL_GetKeyName(event.key.keysym.sym));
+              done = true;
+
         }
         ImGui_ImplOpenGL2_NewFrame();
         ImGui_ImplSDL2_NewFrame(window);
         ImGui::NewFrame();
-
-        ImGui::Begin("Hello world");   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-        ImGui::Text("Just a start!");
+        ImGui::Begin("Camera positions");   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+        ImGui::Text("Position:");
+        ImGui::Text(std::to_string(state.position[0]).c_str());
+        ImGui::Text(std::to_string(state.position[1]).c_str());
+        ImGui::Text(std::to_string(state.position[2]).c_str());
+        ImGui::Text("Direction-look:");
+        ImGui::Text(std::to_string(state.direction_look[0]).c_str());
+        ImGui::Text(std::to_string(state.direction_look[1]).c_str());
+        //ImGui::InputText("File", file_path, 1024); FIXME - not yet
         ImGui::End();
+
+        if (!!strcmp(file_path, path.c_str()))
+          {
+             printf("Changed: %s\n", file_path);
+             path = std::string(file_path);
+             state.path_changed = true;
+          }
 
         ImGui::Render();
 

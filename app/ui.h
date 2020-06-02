@@ -3,20 +3,29 @@
 #include <SDL_opengl.h>
 #include <imgui_impl_sdl.h>
 #include <imgui_impl_opengl2.h>
+#include <string>
+#include "volume_block.h"
+#include <clw_image.h>
+#include <clw_context.h>
 
 struct ui_state{
+   std::string path;
+   bool path_changed;
+
    int height;
    int width;
 
-   float position[3];
-   float direction_look[2];
+   float position[3]; //0->x 1->y 3->z
+   float direction_look[3];
 
-   bool changed;
+   bool cam_changed;
 };
 
 class frame_emitter {
   public:
+    clw_context ctx;
     virtual ~frame_emitter() { };
+    virtual void image_set(volume_block *b) = 0;
     virtual void* render_frame(struct ui_state &state, bool &frame_changed) = 0;
 };
 
@@ -25,8 +34,9 @@ class ui {
   SDL_Window *window;
   SDL_GLContext gl_context;
   GLuint frametexture;
+  std::string path;
   public:
-    ui();
+    ui(const char *path);
     ~ui();
     void run(frame_emitter *emitter);
     const GLuint frametexture_get(void);
