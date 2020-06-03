@@ -157,7 +157,6 @@ void ui::run(frame_emitter *emitter) {
 
         if (!!strcmp(file_path, path.c_str()))
           {
-             printf("Changed: %s\n", file_path);
              path = std::string(file_path);
              state.path_changed = true;
           }

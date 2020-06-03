@@ -50,8 +50,6 @@ void* renderer::render_frame(struct ui_state &state, bool &frame_changed)
   direction_vector[1] /= length;
   direction_vector[2] /= length;
 
-  printf("%f %f %f %f\n", direction_vector[0], direction_vector[1], direction_vector[2], sqrtf(pow(direction_vector[0], 2) + pow(direction_vector[1], 2) + pow(direction_vector[2], 2)));
-
   render_func.execute({(unsigned long)state.width, (unsigned long)state.height}, {8, 8}, frame,
     *reference_volume, *buffer_volume,
     state.position[0], state.position[1], state.position[2],
