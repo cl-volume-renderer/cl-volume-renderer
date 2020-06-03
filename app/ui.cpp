@@ -89,7 +89,7 @@ rotate_vector(float alpha, float beta, float output[3])
 static void
 keysymbol_handle(struct ui_state *state, std::string key, Uint16 mod)
 {
-  float step_size_pos = 1.0f;
+  float step_size_pos = 2.0f;
   float step_size_dir = 0.1f;
   float side[3];
   float forward[3];
@@ -103,32 +103,32 @@ keysymbol_handle(struct ui_state *state, std::string key, Uint16 mod)
     step_size_pos = 5.0f;
 
   if (mod & KMOD_LCTRL || mod & KMOD_RCTRL)
-    step_size_pos = 0.1f;
+    step_size_pos = 1.0f;
 
   if        (key == "W") {
-    state->position[0] += forward[0];
-    state->position[1] += forward[1];
-    state->position[2] += forward[2];
+    state->position[0] += forward[0] * step_size_pos;
+    state->position[1] += forward[1] * step_size_pos;
+    state->position[2] += forward[2] * step_size_pos;
   } else if (key == "S") {
-    state->position[0] -= forward[0];
-    state->position[1] -= forward[1];
-    state->position[2] -= forward[2];
+    state->position[0] -= forward[0] * step_size_pos;
+    state->position[1] -= forward[1] * step_size_pos;
+    state->position[2] -= forward[2] * step_size_pos;
   } else if (key == "A") {
-    state->position[0] += side[0];
-    state->position[1] += side[1];
-    state->position[2] += side[2];
+    state->position[0] += side[0] * step_size_pos;
+    state->position[1] += side[1] * step_size_pos;
+    state->position[2] += side[2] * step_size_pos;
   } else if (key == "D") {
-    state->position[0] -= side[0];
-    state->position[1] -= side[1];
-    state->position[2] -= side[2];
+    state->position[0] -= side[0] * step_size_pos;
+    state->position[1] -= side[1] * step_size_pos;
+    state->position[2] -= side[2] * step_size_pos;
   } else if (key == "E") {
-    state->position[0] += up[0];
-    state->position[1] += up[1];
-    state->position[2] += up[2];
+    state->position[0] += up[0] * step_size_pos;
+    state->position[1] += up[1] * step_size_pos;
+    state->position[2] += up[2] * step_size_pos;
   } else if (key == "Q") {
-    state->position[0] -= up[0];
-    state->position[1] -= up[1];
-    state->position[2] -= up[2];
+    state->position[0] -= up[0] * step_size_pos;
+    state->position[1] -= up[1] * step_size_pos;
+    state->position[2] -= up[2] * step_size_pos;
   } else if (key == "Up") {
     state->direction_look[1] += step_size_dir;
   } else if (key == "Down") {
