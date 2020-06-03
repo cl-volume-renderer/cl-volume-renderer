@@ -61,17 +61,31 @@ struct ray generate_ray(struct ray camera, int x, int y, int x_total, int y_tota
   return ret;
 }
 
+bool in_volume(__read_only image3d_t reference_volume, float3 point) {
+  int3 refdimensions = {get_image_width(reference_volume), get_image_height(reference_volume), get_image_depth(reference_volume)};
+  if (LIMITS(point, x) && LIMITS(point, y) && LIMITS(point, z))
+    return true;
+  return false;
+}
+
 __kernel void render(__write_only image2d_t frame, __read_only image3d_t reference_volume, /*read_and_write*/ image3d_t buffer_volume, float cam_pos_x, float cam_pos_y, float cam_pos_z, float cam_dir_x, float cam_dir_y, float cam_dir_z){
   unsigned int x = get_global_id(0);
   unsigned int y = get_global_id(1);
   int2 pos = {x, y};
 
-  write_imageui(frame, pos, (uint4){0,0,0,0}); 
+  write_imageui(frame, pos, (uint4){0,0,0,0});
 
   struct ray camera = {{cam_pos_x, cam_pos_y, cam_pos_z}, {cam_dir_x, cam_dir_y, cam_dir_z}};
   //struct ray camera = {{-100,220,-100},{-0.707,0,-0.707}};
   struct ray vray = generate_ray(camera, x,y,get_image_width(frame), get_image_height(frame));
-  struct cut_result cut_result = cut(reference_volume, vray);
+  struct cut_result cut_result;
+
+  if (in_volume(reference_volume, vray.origin) == false)
+    cut_result = cut(reference_volume, vray);
+  else {
+    struct cut_result res = {true, vray.origin};
+    cut_result = res;
+  }
 
    if(!cut_result.cut) return;
 
