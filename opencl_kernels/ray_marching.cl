@@ -121,7 +121,7 @@ __kernel void render(__write_only image2d_t frame, __read_only image3d_t referen
         valueb.x += 1;
         float3 random_dir = get_random_direction(x + valueb.x,y+valueb.x,i+valueb.x);
         float3 random_dir_len = get_random_direction(valueb.x,valueb.x*2,valueb.x*3);
-        random_dir_len *= 7;
+        random_dir_len *= 5;
         random_dir = random_dir*random_dir_len;
         //float3 random_dir = {0,1,0};
         float4 sample_position = {read_position.x + random_dir.x, read_position.y + random_dir.y, read_position.z + random_dir.z, 0};
