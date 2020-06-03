@@ -125,7 +125,7 @@ nrrd_header nrrd_loader::load_header(std::string path) {
 // will not work
 volume_block nrrd_loader::load_file(std::string path) {
   const nrrd_header header = load_header(path);
-  const unsigned int inflated_size = header.x * header.y * header.z * sizeof(short);
+  const unsigned int inflated_size = header.x * header.y * header.z;
 
   std::vector<short> voxel_vector(inflated_size);
 

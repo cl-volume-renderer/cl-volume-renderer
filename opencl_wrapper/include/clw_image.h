@@ -30,6 +30,13 @@ class clw_image {
     const auto height = dimensions[1];
     const auto depth = dimensions[2];
 
+    if(width * height * depth * ChannelSize != m_host_array.size()){
+      std::cerr << "Error, moved array is not of the correct size\n";
+      std::cerr << " Expected: " << width*height*depth*ChannelSize << '\n';
+      std::cerr << " Received: " << m_host_array.size() << '\n';
+      exit(1); 
+    }
+
     const auto eval_image_type = [&](){
       if(!(width > 1 && height >= 1 && depth >= 1)){
         std::cerr << "Error, image size is not valid \n";

@@ -23,7 +23,7 @@ void renderer::image_set(volume_block *b)
   if (buffer_volume == NULL)
     delete buffer_volume;
 
-  std::vector<char> buffer(b->m_voxel_count_x * b->m_voxel_count_y * b->m_voxel_count_z, 0);
+  std::vector<char> buffer(b->m_voxel_count_x * b->m_voxel_count_y * b->m_voxel_count_z*2, 0);
   buffer_volume = new clw_image<char, 2>(ctx, std::move(buffer), {b->m_voxel_count_x, b->m_voxel_count_y, b->m_voxel_count_z});
   buffer_volume->push();
   reference_volume = new clw_image<const short>(ctx, std::move(b->m_voxels), {b->m_voxel_count_x, b->m_voxel_count_y, b->m_voxel_count_z});
