@@ -82,21 +82,22 @@ __kernel void render(__write_only image2d_t frame, __read_only image3d_t referen
     int location_x = surface_ray.origin.x + step_size*surface_ray.direction.x*i;
     int location_y = surface_ray.origin.y + step_size*surface_ray.direction.y*i;
     int location_z = surface_ray.origin.z + step_size*surface_ray.direction.z*i;
+    const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
 
     int4 location = {location_x, location_y, location_z, 0};
-    int4 value = read_imagei(reference_volume, CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP, location);
+    int4 value = read_imagei(reference_volume, smp, location);
     if(value.x > 0 && value.x < 255)
     //if(value.x > 800)
-    acc_value += (value.x); 
+    acc_value += (value.x);
 
   }
   acc_value = (acc_value / 100);
-  
+
   uint4 color = {cut_result.cut_point.x, cut_result.cut_point.y, cut_result.cut_point.z,255};
   color /= 16;
   color.x += acc_value;
   color.y += acc_value;
   color.z += acc_value;
 
-  write_imageui(frame, pos, color); 
+  write_imageui(frame, pos, color);
 }
