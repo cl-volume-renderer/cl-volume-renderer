@@ -74,10 +74,30 @@ void ui::frametexture_fill(unsigned int width, unsigned int height, const void *
 #define STEP_SIZE 1.0f
 
 static void
+rotate_vector(float alpha, float beta, float output[3])
+{
+  float direction_vector[3] = {cos(alpha) * cos(beta),
+                               sin(beta),
+                               sin(alpha) * cos(beta)};
+
+  float length = sqrtf(pow(direction_vector[0], 2) + pow(direction_vector[1], 2) + pow(direction_vector[2], 2));
+  output[0] = direction_vector[0] / length;
+  output[1] = direction_vector[1] / length;
+  output[2] = direction_vector[2] / length;
+}
+
+static void
 keysymbol_handle(struct ui_state *state, std::string key, Uint16 mod)
 {
   float step_size_pos = 1.0f;
   float step_size_dir = 0.1f;
+  float side[3];
+  float forward[3];
+  float up[3];
+
+  rotate_vector(state->direction_look[0]         , state->direction_look[1]          , forward);
+  rotate_vector(state->direction_look[0] + M_PI/2, state->direction_look[1]          , side);
+  rotate_vector(state->direction_look[0]         , state->direction_look[1]  + M_PI/2, up);
 
   if (mod & KMOD_LSHIFT || mod & KMOD_RSHIFT)
     step_size_pos = 5.0f;
@@ -86,17 +106,29 @@ keysymbol_handle(struct ui_state *state, std::string key, Uint16 mod)
     step_size_pos = 0.1f;
 
   if        (key == "W") {
-    state->position[0] += step_size_pos;
+    state->position[0] += forward[0];
+    state->position[1] += forward[1];
+    state->position[2] += forward[2];
   } else if (key == "S") {
-    state->position[0] -= step_size_pos;
+    state->position[0] -= forward[0];
+    state->position[1] -= forward[1];
+    state->position[2] -= forward[2];
   } else if (key == "A") {
-    state->position[2] += step_size_pos;
+    state->position[0] += side[0];
+    state->position[1] += side[1];
+    state->position[2] += side[2];
   } else if (key == "D") {
-    state->position[2] -= step_size_pos;
+    state->position[0] -= side[0];
+    state->position[1] -= side[1];
+    state->position[2] -= side[2];
   } else if (key == "E") {
-    state->position[1] += step_size_pos;
+    state->position[0] += up[0];
+    state->position[1] += up[1];
+    state->position[2] += up[2];
   } else if (key == "Q") {
-    state->position[1] -= step_size_pos;
+    state->position[0] -= up[0];
+    state->position[1] -= up[1];
+    state->position[2] -= up[2];
   } else if (key == "Up") {
     state->direction_look[1] += step_size_dir;
   } else if (key == "Down") {
