@@ -8,7 +8,26 @@ struct cut_result{
   float3 cut_point;
 };
 
-#define MINIMUM_CUT(field) min((refdimensions.field - shot.origin.field) / shot.direction.field, (-shot.origin.field) / shot.direction.field)
+struct line_cut_result {
+  bool already_passed;
+  float line_t;
+};
+
+inline struct line_cut_result
+cut_min_eval(float a, float b){
+  struct line_cut_result lc = {false, 0};
+
+  if (a <= 0 || b <= 0) {
+    return lc;
+  } else {
+    lc.already_passed = true;
+    lc.line_t = min(a, b);
+  }
+
+  return lc;
+}
+
+#define MINIMUM_CUT(field) cut_min_eval((refdimensions.field - shot.origin.field) / shot.direction.field, (-shot.origin.field) / shot.direction.field)
 #define CALC_CUT_POINT(field) shot.origin + field * shot.direction;
 #define LIMITS(point, field) (point.field <= refdimensions.field && point.field >= 0)
 
@@ -17,14 +36,14 @@ struct cut_result cut(__read_only image3d_t reference_volume, struct ray shot) {
   int3 refdimensions = {get_image_width(reference_volume), get_image_height(reference_volume), get_image_depth(reference_volume)};
 
   //we first calc the cut points of 3 planes. Each plane is defined by 0 and the max size of the dimension
-  float t_x = MINIMUM_CUT(x);
-  float3 x_cut_point = CALC_CUT_POINT(t_x)
+  struct line_cut_result t_x = MINIMUM_CUT(x);
+  float3 x_cut_point = CALC_CUT_POINT(t_x.line_t)
 
-  float t_y = MINIMUM_CUT(y);
-  float3 y_cut_point = CALC_CUT_POINT(t_y)
+  struct line_cut_result t_y = MINIMUM_CUT(y);
+  float3 y_cut_point = CALC_CUT_POINT(t_y.line_t)
 
-  float t_z = MINIMUM_CUT(z);
-  float3 z_cut_point = CALC_CUT_POINT(t_z)
+  struct line_cut_result t_z = MINIMUM_CUT(z);
+  float3 z_cut_point = CALC_CUT_POINT(t_z.line_t)
 
   //check if a cut of axis is within the boundaries of the other 2 axis. If so, we have a cut.
   if (LIMITS(x_cut_point, y) && LIMITS(x_cut_point, z)) {
