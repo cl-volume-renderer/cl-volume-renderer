@@ -140,7 +140,9 @@ keysymbol_handle(struct ui_state *state, std::string key, Uint16 mod)
   } else if (key == "Left") {
     //cam left
     state->direction_look[0] += step_size_dir;
-  } else {
+  } else if (key == "Escape"){
+    exit(0);
+  }else {
     return;
   }
   state->cam_changed = true;
