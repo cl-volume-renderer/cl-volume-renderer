@@ -45,8 +45,12 @@ struct cut_result cut(__read_only image3d_t reference_volume, struct ray shot) {
 
 struct ray generate_ray(struct ray camera, int x, int y, int x_total, int y_total){
   const float3 up = {0.0, 1.0, 0.0};
-  const float3 cam_dir = camera.direction;
+  const float3 cam_dir  = camera.direction;
   const float3 cam_side = normalize(cross(up,cam_dir));
+  float3 cam_up   = normalize(cross(cam_dir,cam_side));
+  if(cam_up.y < 0){
+    cam_up = -cam_up;
+  }
 
   const float x_f = x - x_total/2;
   const float y_f = y - y_total/2;
@@ -56,7 +60,7 @@ struct ray generate_ray(struct ray camera, int x, int y, int x_total, int y_tota
   const float x_offset = x_f / x_total * aspect_ratio;
   const float y_offset = y_f / y_total;
 
-  const float3 point_on_plane = plane_middle + x_offset*cam_side + y_offset*up;
+  const float3 point_on_plane = plane_middle + x_offset*cam_side + y_offset*cam_up;
   const struct ray ret = {camera.origin, normalize(point_on_plane)};
   return ret;
 }
