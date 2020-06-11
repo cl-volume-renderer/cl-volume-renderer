@@ -92,8 +92,8 @@ bool in_volume(__read_only image3d_t reference_volume, float3 point) {
 }
 
 
-float3 get_random_direction(half x, half y, half other){
-  const half seed = x + y + other; 
+float3 get_random_direction(float x, float y, float other){
+  const float seed = x + y + other;
   const float3 ret = {cos(seed), sin(seed), cos(other - x - y)};
   return normalize(ret);
 }
