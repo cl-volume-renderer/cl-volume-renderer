@@ -2,10 +2,14 @@
 #include "nrrd_loader.h"
 
 std::vector<unsigned char> output = std::vector<unsigned char>(2048*1024*4);
+std::vector<char> buf_init(8*2);
+std::vector<short> ref_init(8);
 
 renderer::renderer()
 : render_func(ctx, "ray_marching.cl", "render"),
-  frame(ctx, std::move(output), {2048, 1024,1})
+  frame(ctx, std::move(output), {2048, 1024,1}),
+  reference_volume(ctx, std::move(ref_init), {2,2,2}),
+  buffer_volume(ctx, std::move(buf_init), {2,2,2})
 {
 
 }
@@ -17,17 +21,11 @@ renderer::~renderer()
 
 void renderer::image_set(volume_block *b)
 {
-  if (reference_volume == NULL)
-    delete reference_volume;
-
-  if (buffer_volume == NULL)
-    delete buffer_volume;
-
   std::vector<char> buffer(b->m_voxel_count_x * b->m_voxel_count_y * b->m_voxel_count_z*2, 0);
-  buffer_volume = new clw_image<char, 2>(ctx, std::move(buffer), {b->m_voxel_count_x, b->m_voxel_count_y, b->m_voxel_count_z});
-  buffer_volume->push();
-  reference_volume = new clw_image<const short>(ctx, std::move(b->m_voxels), {b->m_voxel_count_x, b->m_voxel_count_y, b->m_voxel_count_z});
-  reference_volume->push();
+  buffer_volume = clw_image<char, 2>(ctx, std::move(buffer), {b->m_voxel_count_x, b->m_voxel_count_y, b->m_voxel_count_z});
+  buffer_volume.push();
+  reference_volume = clw_image<const short>(ctx, std::move(b->m_voxels), {b->m_voxel_count_x, b->m_voxel_count_y, b->m_voxel_count_z});
+  reference_volume.push();
 }
 
 void* renderer::render_frame(struct ui_state &state, bool &frame_changed)
@@ -51,7 +49,7 @@ void* renderer::render_frame(struct ui_state &state, bool &frame_changed)
   direction_vector[2] /= length;
 
   render_func.execute({(unsigned long)state.width, (unsigned long)state.height}, {8, 8}, frame,
-    *reference_volume, *buffer_volume,
+    reference_volume, buffer_volume,
     state.position[0], state.position[1], state.position[2],
     direction_vector[0], direction_vector[1], direction_vector[2]);
   frame.pull();

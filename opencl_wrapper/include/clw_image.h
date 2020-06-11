@@ -12,7 +12,7 @@ class clw_image {
   using TInternal = typename std::remove_const<TDevice>::type;
  public:
   constexpr clw_image(const clw_context& context, std::vector<TInternal>&& data, std::array<size_t, 3> dimensions)
-      : m_context(context) {
+      : m_context(&context) {
     cl_int error{0};
     m_host_array = data;
 
@@ -124,17 +124,14 @@ class clw_image {
     const auto access_right =            eval_access_right();
     const cl_image_format image_format = eval_image_format();
     const cl_image_desc   image_desc =   eval_image_desc(image_type);
-   
+
     m_device_array = clCreateImage(context.get_cl_context(), access_right, &image_format, &image_desc, NULL, &error);
     clw_fail_hard_on_error(error);
-  }
+      }
 
   ~clw_image() {
     if (m_device_array != NULL) {
       clw_fail_hard_on_error(clReleaseMemObject(m_device_array));
-    } else {
-      // This should never happen.
-      std::cerr << "Warning, double free of device mem. object.\n";
     }
   }
   // Delete special member functions for now,
@@ -142,7 +139,15 @@ class clw_image {
   clw_image(const clw_image&) = delete;
   clw_image(clw_image&&) = delete;
   clw_image& operator=(const clw_image&) = delete;
-  clw_image& operator=(clw_image&&) = delete;
+  clw_image& operator=(clw_image&& other){
+    m_context      = std::move(other.m_context);
+    m_dimensions   = std::move(other.m_dimensions);
+    m_device_array = std::move(other.m_device_array);
+    m_host_array   = std::move(other.m_host_array);
+    other.m_device_array = 0;
+    other.m_context = 0;
+    return *this;
+  }
 
   TInternal& operator[](std::size_t index) { 
     return m_host_array[index];
@@ -156,7 +161,7 @@ class clw_image {
     std::array<size_t, 3> origin{0,0,0};
     std::array<size_t, 3> region{m_dimensions[0],m_dimensions[1],m_dimensions[2]};
     clw_fail_hard_on_error(clEnqueueWriteImage(
-        m_context.get_cl_command_queue(), m_device_array, CL_TRUE /*blocking*/,
+        m_context->get_cl_command_queue(), m_device_array, CL_TRUE /*blocking*/,
         origin.data(),region.data(),0,0,m_host_array.data(),0,NULL,NULL));
   }
   /// Pulls device data
@@ -164,7 +169,7 @@ class clw_image {
     std::array<size_t, 3> origin{0,0,0};
     std::array<size_t, 3> region{m_dimensions[0],m_dimensions[1],m_dimensions[2]};
     clw_fail_hard_on_error(clEnqueueReadImage(
-        m_context.get_cl_command_queue(), m_device_array, CL_TRUE /*blocking*/,
+        m_context->get_cl_command_queue(), m_device_array, CL_TRUE /*blocking*/,
         origin.data(),region.data(),0,0,m_host_array.data(),0,NULL,NULL));
   }
 
@@ -186,6 +191,6 @@ class clw_image {
  private:
   cl_mem m_device_array;
   std::vector<TInternal> m_host_array;
-  const clw_context& m_context;
+  const clw_context* m_context;
   std::array<size_t, 3> m_dimensions;
 };

@@ -11,7 +11,7 @@ class clw_vector {
   using TInternal = typename std::remove_const<TDevice>::type;
  public:
   clw_vector(const clw_context& context, std::vector<TInternal>&& data)
-      : m_context(context) {
+      : m_context(&context) {
     cl_int error;
     m_host_array = data;
 
@@ -32,9 +32,6 @@ class clw_vector {
   ~clw_vector() {
     if (m_device_array != NULL) {
       clw_fail_hard_on_error(clReleaseMemObject(m_device_array));
-    } else {
-      // This should never happen.
-      std::cerr << "Warning, double free of device mem. object.\n";
     }
   }
   // Delete special member functions for now,
@@ -42,7 +39,14 @@ class clw_vector {
   clw_vector(const clw_vector&) = delete;
   clw_vector(clw_vector&&) = delete;
   clw_vector& operator=(const clw_vector&) = delete;
-  clw_vector& operator=(clw_vector&&) = delete;
+  clw_vector& operator=(clw_vector&& other){
+    m_context      = std::move(other.m_context);
+    m_device_array = std::move(other.m_host_array);
+    m_host_array   = std::move(other.m_host_array);
+    other.m_device_array = 0;
+    other.m_context = 0;
+    return *this;
+  }
 
   TInternal& operator[](std::size_t index) { 
     return m_host_array[index];
@@ -54,14 +58,14 @@ class clw_vector {
   /// Pushes host data to device
   void push() const{
     clw_fail_hard_on_error(clEnqueueWriteBuffer(
-        m_context.get_cl_command_queue(), m_device_array, CL_TRUE /*blocking*/,
+        m_context->get_cl_command_queue(), m_device_array, CL_TRUE /*blocking*/,
         0, m_host_array.size() * sizeof(TDevice), m_host_array.data(), 0,
         NULL, NULL));
   }
   /// Pulls device data
   void pull() {
         clw_fail_hard_on_error(clEnqueueReadBuffer(
-            m_context.get_cl_command_queue(), m_device_array,
+            m_context->get_cl_command_queue(), m_device_array,
             CL_TRUE /*blocking*/, 0, m_host_array.size() * sizeof(TDevice),
             m_host_array.data(), 0, NULL, NULL));
   }
@@ -79,5 +83,6 @@ class clw_vector {
  private:
   cl_mem m_device_array;
   std::vector<TInternal> m_host_array;
-  const clw_context& m_context;
+  //We are not the owner!
+  const clw_context* m_context;
 };
