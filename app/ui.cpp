@@ -142,6 +142,8 @@ keysymbol_handle(struct ui_state *state, std::string key, Uint16 mod)
     state->direction_look[0] += step_size_dir;
   } else if (key == "Escape"){
     exit(0);
+  } else if (key == "R"){
+    //just there to render if we do not move
   }else {
     return;
   }
