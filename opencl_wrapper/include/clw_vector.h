@@ -41,14 +41,14 @@ class clw_vector {
   clw_vector& operator=(const clw_vector&) = delete;
   clw_vector& operator=(clw_vector&& other){
     m_context      = std::move(other.m_context);
-    m_device_array = std::move(other.m_host_array);
+    m_device_array = std::move(other.m_device_array);
     m_host_array   = std::move(other.m_host_array);
     other.m_device_array = 0;
     other.m_context = 0;
     return *this;
   }
 
-  TInternal& operator[](std::size_t index) { 
+  TInternal& operator[](std::size_t index) {
     return m_host_array[index];
   }
   const TInternal& operator[](std::size_t index) const {

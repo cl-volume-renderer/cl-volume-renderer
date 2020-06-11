@@ -73,7 +73,7 @@ struct ray generate_ray(struct ray camera, int x, int y, int x_total, int y_tota
 
   const float x_f = x - x_total/2;
   const float y_f = y - y_total/2;
-  
+
   const float3 plane_middle = camera.direction;
   const float aspect_ratio = (float)x_total / (float)y_total;
   const float x_offset = x_f / x_total * aspect_ratio;
@@ -98,11 +98,35 @@ float3 get_random_direction(float x, float y, float other){
   return normalize(ret);
 }
 
+int2
+buffer_volume_read(int3 refdimensions, char *buffer_volume, int4 pos)
+{
+   int2 ret = {0, 0};
 
-__kernel void render(__write_only image2d_t frame, __read_only image3d_t reference_volume, __read_write image3d_t buffer_volume, float cam_pos_x, float cam_pos_y, float cam_pos_z, float cam_dir_x, float cam_dir_y, float cam_dir_z){
+   int idx = (refdimensions.x*refdimensions.z * pos.y + refdimensions.x * pos.z + pos.x)*2;
+
+   ret.x = buffer_volume[idx + 0];
+   ret.y = buffer_volume[idx + 1];
+
+   return ret;
+}
+
+
+void
+buffer_volume_write(int3 refdimensions, char *buffer_volume, int4 pos, int2 valueb)
+{
+   int idx = (refdimensions.x*refdimensions.z * pos.y + refdimensions.x * pos.z + pos.x)*2;
+
+   buffer_volume[idx + 0] = valueb.x;
+   buffer_volume[idx + 1] = valueb.y;
+}
+
+
+__kernel void render(__write_only image2d_t frame, __read_only image3d_t reference_volume, __global char* buffer_volume, float cam_pos_x, float cam_pos_y, float cam_pos_z, float cam_dir_x, float cam_dir_y, float cam_dir_z){
   unsigned int x = get_global_id(0);
   unsigned int y = get_global_id(1);
   int2 pos = {x, y};
+  int3 refdimensions = {get_image_width(reference_volume), get_image_height(reference_volume), get_image_depth(reference_volume)};
 
   write_imageui(frame, pos, (uint4){0,0,0,0});
 
@@ -136,7 +160,8 @@ __kernel void render(__write_only image2d_t frame, __read_only image3d_t referen
     int4 value = read_imagei(reference_volume, smp, location);
     //if(value.x > 0 && value.x < 255)
     if(value.x > 800){
-      int4 valueb = read_imagei(buffer_volume, smp, location);
+      int4 location_int = {location_x, location_y, location_z, 0};
+      int2 valueb = buffer_volume_read(refdimensions, buffer_volume, location_int);
       read_position.x = location_x;
       read_position.y = location_y;
       read_position.z = location_z;
@@ -168,8 +193,7 @@ __kernel void render(__write_only image2d_t frame, __read_only image3d_t referen
         //    break;
         //  }
         //}
-        write_imagei(buffer_volume, read_position, valueb);
-
+        buffer_volume_write(refdimensions, buffer_volume, read_position, valueb);
       }
       break;
     }else if(value.x > 40 && value.x < 300){
@@ -182,7 +206,7 @@ __kernel void render(__write_only image2d_t frame, __read_only image3d_t referen
   int4 x_offset = {1,0,0,0};
   int4 y_offset = {0,1,0,0};
   int4 z_offset = {0,0,1,0};
-  int4 valuef = read_imagei(buffer_volume, smp, read_position);
+  int2 valuef = buffer_volume_read(refdimensions, buffer_volume, read_position);
   acc_value = 255 - valuef.y*(256/ao_samples);
   int complete = ao_samples - valuef.x;
 

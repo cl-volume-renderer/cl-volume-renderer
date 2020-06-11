@@ -9,7 +9,7 @@ renderer::renderer()
 : render_func(ctx, "ray_marching.cl", "render"),
   frame(ctx, std::move(output), {2048, 1024,1}),
   reference_volume(ctx, std::move(ref_init), {2,2,2}),
-  buffer_volume(ctx, std::move(buf_init), {2,2,2})
+  buffer_volume(ctx, std::move(buf_init))
 {
 
 }
@@ -22,7 +22,7 @@ renderer::~renderer()
 void renderer::image_set(volume_block *b)
 {
   std::vector<char> buffer(b->m_voxel_count_x * b->m_voxel_count_y * b->m_voxel_count_z*2, 0);
-  buffer_volume = clw_image<char, 2>(ctx, std::move(buffer), {b->m_voxel_count_x, b->m_voxel_count_y, b->m_voxel_count_z});
+  buffer_volume = clw_vector<char>(ctx, std::move(buffer));
   buffer_volume.push();
   reference_volume = clw_image<const short>(ctx, std::move(b->m_voxels), {b->m_voxel_count_x, b->m_voxel_count_y, b->m_voxel_count_z});
   reference_volume.push();
