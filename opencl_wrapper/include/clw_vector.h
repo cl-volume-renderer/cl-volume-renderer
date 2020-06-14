@@ -3,6 +3,7 @@
 #include <iostream>
 #include <type_traits>
 #include <vector>
+#include <cassert>
 #include "clw_context.h"
 #include "clw_helper.h"
 
@@ -32,6 +33,7 @@ class clw_vector {
   ~clw_vector() {
     if (m_device_array != NULL) {
       clw_fail_hard_on_error(clReleaseMemObject(m_device_array));
+      m_device_array = NULL;
     }
   }
   // Delete special member functions for now,
@@ -40,6 +42,14 @@ class clw_vector {
   clw_vector(clw_vector&&) = delete;
   clw_vector& operator=(const clw_vector&) = delete;
   clw_vector& operator=(clw_vector&& other){
+    assert(this != &other); //Moving object into itself... why?
+
+    //Deallocate the device memory of current object
+    if (m_device_array != NULL) {
+      clw_fail_hard_on_error(clReleaseMemObject(m_device_array));
+      m_device_array = NULL;
+    }
+
     m_context      = std::move(other.m_context);
     m_device_array = std::move(other.m_device_array);
     m_host_array   = std::move(other.m_host_array);

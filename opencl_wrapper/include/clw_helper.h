@@ -288,6 +288,8 @@ static std::string h__get_warning_message(cl_int status) {
   return warning_message;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
 static void h__clw_fail_hard_on_error_message(cl_int status,std::string file, std::string function, int line){
   if (status == CL_SUCCESS) return;
 	std::cerr << "WARNING OpenCL call failed. See error message:\n";
@@ -305,3 +307,4 @@ static void h__clw_fail_hard_on_error_message(cl_int status,std::string file, st
 
   exit(1);
 }
+#pragma GCC diagnostic pop
