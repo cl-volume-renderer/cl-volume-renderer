@@ -181,14 +181,15 @@ void ui::run(frame_emitter *emitter) {
         ImGui_ImplSDL2_NewFrame(window);
         ImGui::NewFrame();
         ImGui::Begin("Camera positions");   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+
         ImGui::Text("Position:");
-        ImGui::Text(std::to_string(state.position[0]).c_str());
-        ImGui::Text(std::to_string(state.position[1]).c_str());
-        ImGui::Text(std::to_string(state.position[2]).c_str());
+        ImGui::Text(" Global X: %.3f", state.position[0]);
+        ImGui::Text(" Global Y: %.3f", state.position[1]);
+        ImGui::Text(" Global Z: %.3f", state.position[2]);
         ImGui::Text("Direction-look:");
-        ImGui::Text(std::to_string(state.direction_look[0]).c_str());
-        ImGui::Text(std::to_string(state.direction_look[1]).c_str());
-        //ImGui::InputText("File", file_path, 1024); FIXME - not yet
+        ImGui::Text(" Local  Y: %.3f", state.direction_look[0]);
+        ImGui::Text(" Local  Z: %.3f", state.direction_look[1]);
+
         ImGui::End();
 
         if (!!strcmp(file_path, path.c_str()))
