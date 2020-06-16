@@ -160,7 +160,7 @@ __kernel void render(__write_only image2d_t frame, __read_only image3d_t referen
     int4 value = read_imagei(reference_volume, smp, location);
     //if(value.x > 0 && value.x < 255)
     if(value.x > 800){
-      int4 location_int = {location_x, location_y, location_z, 0};
+      int4 location_int = {(int)location_x, (int)location_y, (int)location_z, 0};
       int2 valueb = buffer_volume_read(refdimensions, buffer_volume, location_int);
       read_position.x = location_x;
       read_position.y = location_y;

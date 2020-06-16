@@ -8,6 +8,45 @@
 #include <clw_image.h>
 #include <clw_context.h>
 
+struct Position3D {
+   float val[3];
+   Position3D operator+(Position3D other) {
+    Position3D ret = {
+      val[0] + other.val[0],
+      val[1] + other.val[1],
+      val[2] + other.val[2]
+    };
+    return ret;
+   }
+   Position3D operator-(Position3D other) {
+    Position3D ret = {
+      val[0] - other.val[0],
+      val[1] - other.val[1],
+      val[2] - other.val[2]
+    };
+    return ret;
+   }
+   Position3D operator*(float other) {
+    Position3D ret = {
+      val[0] * other,
+      val[1] * other,
+      val[2] * other
+    };
+    return ret;
+   }
+   Position3D operator/(float other) {
+    Position3D ret = {
+      val[0] / other,
+      val[1] / other,
+      val[2] / other
+    };
+    return ret;
+   }
+   double length() {
+    return sqrtf(pow(val[0], 2) + pow(val[1], 2) + pow(val[2], 2));
+   }
+};
+
 struct ui_state{
    std::string path;
    bool path_changed;
@@ -15,7 +54,7 @@ struct ui_state{
    int height;
    int width;
 
-   float position[3]; //0->x 1->y 3->z
+   Position3D position; //0->x 1->y 3->z
    float direction_look[2]; //this are two angles that you can adjust
 
    bool cam_changed;

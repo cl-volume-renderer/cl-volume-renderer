@@ -50,7 +50,7 @@ void* renderer::render_frame(struct ui_state &state, bool &frame_changed)
 
   render_func.execute({(unsigned long)state.width, (unsigned long)state.height}, {8, 8}, frame,
     reference_volume, buffer_volume,
-    state.position[0], state.position[1], state.position[2],
+    state.position.val[0], state.position.val[1], state.position.val[2],
     direction_vector[0], direction_vector[1], direction_vector[2]);
   frame.pull();
 

@@ -73,31 +73,30 @@ void ui::frametexture_fill(unsigned int width, unsigned int height, const void *
 
 #define STEP_SIZE 1.0f
 
-static void
-rotate_vector(float alpha, float beta, float output[3])
+static Position3D
+rotate_vector(float alpha, float beta)
 {
-  float direction_vector[3] = {cos(alpha) * cos(beta),
-                               sin(beta),
-                               sin(alpha) * cos(beta)};
+  Position3D direction_vector = {cos(alpha) * cos(beta),
+                                 sin(beta),
+                                 sin(alpha) * cos(beta)};
 
-  float length = sqrtf(pow(direction_vector[0], 2) + pow(direction_vector[1], 2) + pow(direction_vector[2], 2));
-  output[0] = direction_vector[0] / length;
-  output[1] = direction_vector[1] / length;
-  output[2] = direction_vector[2] / length;
+  float length = direction_vector.length();
+  return direction_vector / length;
 }
+
 
 static void
 keysymbol_handle(struct ui_state *state, std::string key, Uint16 mod)
 {
   float step_size_pos = 2.0f;
   float step_size_dir = 0.1f;
-  float side[3];
-  float forward[3];
-  float up[3];
+  Position3D side;
+  Position3D forward;
+  Position3D up;
 
-  rotate_vector(state->direction_look[0]         , state->direction_look[1]          , forward);
-  rotate_vector(state->direction_look[0] + M_PI/2, state->direction_look[1]          , side);
-  rotate_vector(state->direction_look[0]         , state->direction_look[1]  + M_PI/2, up);
+  forward = rotate_vector(state->direction_look[0]         , state->direction_look[1]);
+  side =    rotate_vector(state->direction_look[0] + M_PI/2, state->direction_look[1]);
+  up =      rotate_vector(state->direction_look[0]         , state->direction_look[1]  + M_PI/2);
 
   if (mod & KMOD_LSHIFT || mod & KMOD_RSHIFT)
     step_size_pos = 5.0f;
@@ -106,29 +105,17 @@ keysymbol_handle(struct ui_state *state, std::string key, Uint16 mod)
     step_size_pos = 1.0f;
 
   if        (key == "W") {
-    state->position[0] += forward[0] * step_size_pos;
-    state->position[1] += forward[1] * step_size_pos;
-    state->position[2] += forward[2] * step_size_pos;
+    state->position = state->position + forward * step_size_pos;
   } else if (key == "S") {
-    state->position[0] -= forward[0] * step_size_pos;
-    state->position[1] -= forward[1] * step_size_pos;
-    state->position[2] -= forward[2] * step_size_pos;
+    state->position = state->position - forward * step_size_pos;
   } else if (key == "A") {
-    state->position[0] += side[0] * step_size_pos;
-    state->position[1] += side[1] * step_size_pos;
-    state->position[2] += side[2] * step_size_pos;
+    state->position = state->position + side * step_size_pos;
   } else if (key == "D") {
-    state->position[0] -= side[0] * step_size_pos;
-    state->position[1] -= side[1] * step_size_pos;
-    state->position[2] -= side[2] * step_size_pos;
+    state->position = state->position - side * step_size_pos;
   } else if (key == "E") {
-    state->position[0] += up[0] * step_size_pos;
-    state->position[1] += up[1] * step_size_pos;
-    state->position[2] += up[2] * step_size_pos;
+    state->position = state->position + up * step_size_pos;
   } else if (key == "Q") {
-    state->position[0] -= up[0] * step_size_pos;
-    state->position[1] -= up[1] * step_size_pos;
-    state->position[2] -= up[2] * step_size_pos;
+    state->position = state->position - up * step_size_pos;
   } else if (key == "Up") {
     state->direction_look[1] += step_size_dir;
   } else if (key == "Down") {
@@ -183,9 +170,9 @@ void ui::run(frame_emitter *emitter) {
         ImGui::Begin("Camera positions");   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
 
         ImGui::Text("Position:");
-        ImGui::Text(" Global X: %.3f", state.position[0]);
-        ImGui::Text(" Global Y: %.3f", state.position[1]);
-        ImGui::Text(" Global Z: %.3f", state.position[2]);
+        ImGui::Text(" Global X: %.3f", state.position.val[0]);
+        ImGui::Text(" Global Y: %.3f", state.position.val[1]);
+        ImGui::Text(" Global Z: %.3f", state.position.val[2]);
         ImGui::Text("Direction-look:");
         ImGui::Text(" Local  Y: %.3f", state.direction_look[0]);
         ImGui::Text(" Local  Z: %.3f", state.direction_look[1]);
