@@ -76,6 +76,8 @@ void ui::frametexture_fill(unsigned int width, unsigned int height, const void *
 static Position3D
 rotate_vector(float alpha, float beta)
 {
+  alpha = fmod(alpha, M_PI);
+  beta = fmod(beta, M_PI);
   Position3D direction_vector = {cos(alpha) * cos(beta),
                                  sin(beta),
                                  sin(alpha) * cos(beta)};
@@ -96,7 +98,7 @@ keysymbol_handle(struct ui_state *state, std::string key, Uint16 mod)
 
   forward = rotate_vector(state->direction_look[0]         , state->direction_look[1]);
   side =    rotate_vector(state->direction_look[0] + M_PI/2, state->direction_look[1]);
-  up =      rotate_vector(state->direction_look[0]         , state->direction_look[1]  + M_PI/2);
+  up =      rotate_vector(state->direction_look[0]         , (state->direction_look[1]  + M_PI/2));
 
   if (mod & KMOD_LSHIFT || mod & KMOD_RSHIFT)
     step_size_pos = 5.0f;
