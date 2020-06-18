@@ -29,7 +29,10 @@ __kernel void create_signed_distance_field(__read_only image3d_t sdf_image, __wr
      return;
 
   int4 local_value = read_imagei(sdf_image, smp, pos);
-  short neightbour_distance = local_value.x > 0 ? SHRT_MAX : SHRT_MIN;
+  short mul = local_value.x < 0 ? -1 : 1;
+  short neightbour_distance = SHRT_MAX;
+  int abs_added_distance = 0;
+  int added_distance = 0;
   bool once_neg = false;
   bool once_pos = false;
 
@@ -38,25 +41,17 @@ __kernel void create_signed_distance_field(__read_only image3d_t sdf_image, __wr
       for(int z = -1; z < 2; z++) {
         int4 offset = {x, y, z, 0};
         int4 value = read_imagei(sdf_image, smp, pos + offset);
-        short tmp = (short) value.x;
-        if (tmp < 0) {
-          once_neg = true;
-          tmp --;
-          neightbour_distance = max(neightbour_distance, tmp);
-        } else {
-          once_pos = true;
-          tmp ++;
-          neightbour_distance = min(neightbour_distance, tmp);
-        }
+        short tmp = (short) abs(value.x);
+        abs_added_distance += abs(value.x);
+        added_distance += value.x;
+        neightbour_distance = min(neightbour_distance, (short)(tmp + 1));
       }
     }
   }
 
-  if (once_pos && once_pos)
-    return;
-
+  neightbour_distance = neightbour_distance * mul;
   //we only change the value when we are at a homogenous spot
-  if (local_value.x != neightbour_distance){
+  if (local_value.x != neightbour_distance && abs(added_distance) == abs_added_distance){
     local_value.x = neightbour_distance;
     atomic_add(change_counter, 1);
   }
