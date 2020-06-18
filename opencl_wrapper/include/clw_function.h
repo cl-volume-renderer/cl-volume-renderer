@@ -144,6 +144,11 @@ class clw_function{
     remove_zero(global_size);
     remove_zero(local_size);
 
+    if(local_size[0]*local_size[1]*local_size[2] > 256){
+      std::cerr << "Warning, creating local size incompatible with AMD GPUs.\n";
+      std::cerr << "  used local size: " << local_size[0]*local_size[1]*local_size[2] << " > 256\n"; 
+    } 
+
     assert(global_size[0] >= local_size[0]); //Error, global size x < local_size x.
     assert(global_size[1] >= local_size[1]); //Error, global size y < local_size y.
     assert(global_size[2] >= local_size[2]); //Error, global size z < local_size z.
