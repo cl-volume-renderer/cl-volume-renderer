@@ -33,18 +33,18 @@ __kernel void create_signed_distance_field(__read_only image3d_t sdf_image, __wr
   short neightbour_distance = SHRT_MAX;
   int abs_added_distance = 0;
   int added_distance = 0;
-  bool once_neg = false;
-  bool once_pos = false;
 
   for(int x = -1; x < 2; x++) {
     for(int y = -1; y < 2; y++) {
       for(int z = -1; z < 2; z++) {
-        int4 offset = {x, y, z, 0};
-        int4 value = read_imagei(sdf_image, smp, pos + offset);
-        short tmp = (short) abs(value.x);
-        abs_added_distance += abs(value.x);
-        added_distance += value.x;
-        neightbour_distance = min(neightbour_distance, (short)(tmp + 1));
+        if (x != 0 && y != 0 && z != 0) {
+          int4 offset = {x, y, z, 0};
+          int4 value = read_imagei(sdf_image, smp, pos + offset);
+          short tmp = (short) abs(value.x);
+          abs_added_distance += tmp;
+          added_distance += value.x;
+          neightbour_distance = min(neightbour_distance, (short)(tmp + 1));
+        }
       }
     }
   }

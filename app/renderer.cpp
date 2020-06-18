@@ -57,6 +57,7 @@ void renderer::image_set(volume_block *b)
   clw_vector<int> atomic_add_buffer(ctx, std::move(counter));
   auto sdf_generation_initialization = clw_function(ctx, "signed_distance_field.cl", "create_signed_distance_field");
   printf("Starting to build SDF\n");
+  clock_t start = clock();
   for (int i = 0; i < 1000; ++i) {
     atomic_add_buffer[0] = 0;
     atomic_add_buffer.push();
@@ -70,7 +71,11 @@ void renderer::image_set(volume_block *b)
       break;
     }
   }
-  printf("Finished building SDF\n");
+  printf("Finished building SDF (%f)\n", (float)(clock() - start) / CLOCKS_PER_SEC);
+
+  //this here is needed for nvidia to ensure that in another call with sdf as parameter to not contain gargabe
+  sdf.pull();
+  sdf.push();
 }
 
 void* renderer::render_frame(struct ui_state &state, bool &frame_changed)
@@ -95,7 +100,7 @@ void* renderer::render_frame(struct ui_state &state, bool &frame_changed)
 
   TIME_START();
   render_func.execute({(unsigned long)state.width, (unsigned long)state.height}, {8, 8}, frame,
-    reference_volume, buffer_volume,
+    reference_volume, sdf, buffer_volume,
     state.position.val[0], state.position.val[1], state.position.val[2],
     direction_vector[0], direction_vector[1], direction_vector[2]);
 

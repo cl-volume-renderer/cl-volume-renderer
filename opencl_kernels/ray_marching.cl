@@ -139,7 +139,7 @@ float3 get_random_direction(float x, float y, float other){
 
 //Return a sample of a point on the hemisphere towards normal
 float3 get_hemisphere_direction(float3 normal, float seed){
-  const float3 direction = {cos(seed), sin(seed), cos(seed + 111.0)}; 
+  const float3 direction = {cos(seed), sin(seed), cos(seed + 111.0)};
   const float decider = dot(direction, normal);
   return normalize(direction * decider);
 }
@@ -168,7 +168,7 @@ buffer_volume_write(int3 refdimensions, char *buffer_volume, int4 pos, int2 valu
 }
 
 
-__kernel void render(__write_only image2d_t frame, __read_only image3d_t reference_volume, __global char* buffer_volume, float cam_pos_x, float cam_pos_y, float cam_pos_z, float cam_dir_x, float cam_dir_y, float cam_dir_z){
+__kernel void render(__write_only image2d_t frame, __read_only image3d_t reference_volume, __read_only image3d_t sdf, __global char* buffer_volume, float cam_pos_x, float cam_pos_y, float cam_pos_z, float cam_dir_x, float cam_dir_y, float cam_dir_z){
   unsigned int x = get_global_id(0);
   unsigned int y = get_global_id(1);
   int2 pos = {x, y};
@@ -204,6 +204,8 @@ __kernel void render(__write_only image2d_t frame, __read_only image3d_t referen
 
     float4 location = {location_x, location_y, location_z, 0};
     int4 value = read_imagei(reference_volume, smp, location);
+    float step_size_tmp = (float)(abs(read_imagei(sdf, smp, location).x));
+    step_size = max(step_size_tmp, (float)0.5);
     //if(value.x > 0 && value.x < 255)
     if(value.x > 800){
       int4 location_int = {(int)location_x, (int)location_y, (int)location_z, 0};
@@ -279,7 +281,7 @@ __kernel void render(__write_only image2d_t frame, __read_only image3d_t referen
   color.x += acc_value + complete*2;
   color.y += acc_value;
   color.z += acc_value;
-	
+
   if(color.x + color.y + color.z < 255*3)
   write_imageui(frame, pos, color);
 }
@@ -377,7 +379,7 @@ __kernel void render(__write_only image2d_t frame, __read_only image3d_t referen
   color.x += acc_value + complete*2;
   color.y += acc_value;
   color.z += acc_value;
-	
+
   if(color.x + color.y + color.z < 255*3)
   write_imageui(frame, pos, color);
 }
