@@ -197,22 +197,27 @@ __kernel void render(__write_only image2d_t frame, __read_only image3d_t referen
   const int ao_samples = 90;
   int4 read_position = {0,0,0,0};
   int flesh_acc = 0;
-  for(int i = 0; i < 1000; ++i){
-    float location_x = surface_ray.origin.x + step_size*surface_ray.direction.x*i;
-    float location_y = surface_ray.origin.y + step_size*surface_ray.direction.y*i;
-    float location_z = surface_ray.origin.z + step_size*surface_ray.direction.z*i;
 
-    float4 location = {location_x, location_y, location_z, 0};
+  float4 location = {surface_ray.origin.x, surface_ray.origin.y, surface_ray.origin.z, 0};
+  for(int i = 0; i < 1000; ++i){
     int4 value = read_imagei(reference_volume, smp, location);
     float step_size_tmp = (float)(abs(read_imagei(sdf, smp, location).x));
-    step_size = max(step_size_tmp, (float)0.5);
+    step_size_tmp = max(step_size_tmp * 0.5, 0.5);
+    //step_size_tmp = 0.5;
+    float4 tmp_thing = {
+      surface_ray.direction.x * step_size_tmp,
+      surface_ray.direction.y * step_size_tmp,
+      surface_ray.direction.z * step_size_tmp,
+      0
+    };
+    location += tmp_thing;
     //if(value.x > 0 && value.x < 255)
     if(value.x > 800){
-      int4 location_int = {(int)location_x, (int)location_y, (int)location_z, 0};
+      int4 location_int = {(int)location.x, (int)location.y, (int)location.z, 0};
       int2 valueb = buffer_volume_read(refdimensions, buffer_volume, location_int);
-      read_position.x = location_x;
-      read_position.y = location_y;
-      read_position.z = location_z;
+      read_position.x = location.x;
+      read_position.y = location.y;
+      read_position.z = location.z;
       if(valueb.x < ao_samples){
         valueb.x += 1;
         float3 random_dir = get_random_direction(x + valueb.x,y+valueb.x,i+valueb.x);
