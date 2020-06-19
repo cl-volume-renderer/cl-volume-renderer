@@ -78,6 +78,21 @@ void renderer::image_set(volume_block *b)
   sdf.push();
 }
 
+
+static Position3D
+rotate_vector(float alpha, float beta, float gamma, Position3D vec)
+{
+  Position3D direction_vector = {
+    (cos(alpha)*cos(beta))*vec.val[0] +            (cos(alpha)*sin(beta)-sin(alpha)*cos(gamma))*vec.val[1] + (cos(alpha)*sin(beta)*cos(gamma)+sin(alpha)*sin(gamma))*vec.val[2],
+              (-sin(beta))*vec.val[0] +                                  (cos(beta)*sin(gamma))*vec.val[1] +                                  (cos(beta)*cos(gamma))*vec.val[2],
+    (sin(alpha)*cos(beta))*vec.val[0] + (sin(alpha)*sin(beta)*sin(gamma)+cos(alpha)*cos(gamma))*vec.val[1] + (sin(alpha)*sin(beta)*cos(gamma)-cos(alpha)*sin(gamma))*vec.val[2],
+  };
+
+  float length = direction_vector.length();
+  return direction_vector / length;
+}
+
+
 void* renderer::render_frame(struct ui_state &state, bool &frame_changed)
 {
   frame_changed = false;
@@ -87,22 +102,13 @@ void* renderer::render_frame(struct ui_state &state, bool &frame_changed)
   //for now we dont have dynamic frame sizes, so we need to have some assertion that the frame size is not magically changing.
   //assert(frame.size() == state.width * state.height * 4);
 
-  float direction_vector[3] = {
-                cos(state.direction_look[0]) * cos(state.direction_look[1]),
-                sin(state.direction_look[1]),
-                sin(state.direction_look[0]) * cos(state.direction_look[1])
-              };
-
-  float length = sqrtf(pow(direction_vector[0], 2) + pow(direction_vector[1], 2) + pow(direction_vector[2], 2));
-  direction_vector[0] /= length;
-  direction_vector[1] /= length;
-  direction_vector[2] /= length;
+  Position3D vec = rotate_vector(state.direction_look[0], state.direction_look[1], 0.0, {1.0, 0.0, 0.0});
 
   TIME_START();
   render_func.execute({(unsigned long)state.width, (unsigned long)state.height}, {8, 8}, frame,
     reference_volume, sdf, buffer_volume,
     state.position.val[0], state.position.val[1], state.position.val[2],
-    direction_vector[0], direction_vector[1], direction_vector[2]);
+    vec.val[0], vec.val[1], vec.val[2]);
 
   frame.pull();
   TIME_PRINT("Render time");
