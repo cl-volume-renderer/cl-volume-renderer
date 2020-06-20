@@ -20,7 +20,7 @@
 
 class clw_function{
   public:
-  clw_function(const clw_context& context, const std::vector<std::string>& paths, const std::string& function_name): m_function_name(function_name), m_context(context){
+  [[deprecated]] clw_function(const clw_context& context, const std::vector<std::string>& paths, const std::string& function_name): m_function_name(function_name), m_context(context){
     std::string full_code = "";
     for (auto path : paths) {
       std::ifstream file_stream(KERNEL_DIR + path);
