@@ -73,37 +73,24 @@ void ui::frametexture_fill(unsigned int width, unsigned int height, const void *
 
 #define STEP_SIZE 1.0f
 
-static Position3D
-rotate_vector(float alpha, float beta, float gamma, Position3D vec)
-{
-  Position3D direction_vector = {
-    (cos(alpha)*cos(beta))*vec.val[0] +            (cos(alpha)*sin(beta)-sin(alpha)*cos(gamma))*vec.val[1] + (cos(alpha)*sin(beta)*cos(gamma)+sin(alpha)*sin(gamma))*vec.val[2],
-              (-sin(beta))*vec.val[0] +                                  (cos(beta)*sin(gamma))*vec.val[1] +                                  (cos(beta)*cos(gamma))*vec.val[2],
-    (sin(alpha)*cos(beta))*vec.val[0] + (sin(alpha)*sin(beta)*sin(gamma)+cos(alpha)*cos(gamma))*vec.val[1] + (sin(alpha)*sin(beta)*cos(gamma)-cos(alpha)*sin(gamma))*vec.val[2],
-  };
-
-  float length = direction_vector.length();
-  return direction_vector / length;
-}
-
 static void
 keysymbol_handle(struct ui_state *state, std::string key, Uint16 mod)
 {
   float step_size_pos = 2.0f;
   float step_size_dir = 0.1f;
-  Position3D side;
-  Position3D forward;
-  Position3D up;
+  Position3D side(state->direction_look[0], state->direction_look[1], 0.0, (Position3D){0.0, 1.0, 0.0});
+  Position3D forward(state->direction_look[0], state->direction_look[1], 0.0, (Position3D){1.0, 0.0, 0.0});
+  Position3D up(state->direction_look[0], state->direction_look[1], 0.0, (Position3D){0.0, 0.0, 1.0});
 
-  side    =      rotate_vector(state->direction_look[0], state->direction_look[1], 0.0, (Position3D){0.0, 1.0, 0.0});
-  up      =      rotate_vector(state->direction_look[0], state->direction_look[1], 0.0, (Position3D){0.0, 0.0, 1.0});
-  forward =      rotate_vector(state->direction_look[0], state->direction_look[1], 0.0, (Position3D){1.0, 0.0, 0.0});
-
-  if (mod & KMOD_LSHIFT || mod & KMOD_RSHIFT)
+  if (mod & KMOD_LSHIFT || mod & KMOD_RSHIFT) {
+    step_size_dir = 0.2f;
     step_size_pos = 5.0f;
+  }
 
-  if (mod & KMOD_LCTRL || mod & KMOD_RCTRL)
+  if (mod & KMOD_LCTRL || mod & KMOD_RCTRL) {
+    step_size_dir = 0.05f;
     step_size_pos = 1.0f;
+  }
 
   if        (key == "W") {
     state->position = state->position + forward * step_size_pos;
