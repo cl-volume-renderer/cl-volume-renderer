@@ -18,16 +18,20 @@
 
 class clw_function{
   public:
-  clw_function(const clw_context& context, const std::string& path, const std::string& function_name): m_function_name(function_name), m_context(context){
-    std::ifstream file_stream(KERNEL_DIR + path);
-    if(file_stream.fail()){
-      std::cerr << "Failed to open file: " << path << ".\n";
-      exit(1);
+  clw_function(const clw_context& context, const std::vector<std::string>& paths, const std::string& function_name): m_function_name(function_name), m_context(context){
+    std::string full_code = "";
+    for (auto path : paths) {
+      std::ifstream file_stream(KERNEL_DIR + path);
+      if(file_stream.fail()){
+        std::cerr << "Failed to open file: " << path << ".\n";
+        exit(1);
+      }
+      std::string opencl_code((std::istreambuf_iterator<char>(file_stream)), std::istreambuf_iterator<char>());
+      full_code += opencl_code;
     }
-    std::string opencl_code((std::istreambuf_iterator<char>(file_stream)), std::istreambuf_iterator<char>());
 
     cl_int error;
-    const char* indirection[1]{opencl_code.data()};
+    const char* indirection[1]{full_code.data()};
     m_program = clCreateProgramWithSource(m_context.get_cl_context(), 1, indirection, NULL, &error);
     clw_fail_hard_on_error(error);
 
@@ -50,28 +54,31 @@ class clw_function{
     m_kernel = clCreateKernel(m_program, function_name.data(), NULL);
     clw_fail_hard_on_error(error);
   }
-
-  ~clw_function(){
-    if (m_kernel != NULL && m_program != NULL) {                                  
-        clw_fail_hard_on_error(clReleaseKernel(m_kernel));  
-        clw_fail_hard_on_error(clReleaseProgram(m_program));  
-    } else {                                                       
-         //This should never happen.                                 
-      std::cerr << "Warning, double free of device mem. object.\n";
-    }                                                              
+  clw_function(const clw_context& context, const std::string& path, const std::string& function_name)
+    : clw_function(context, (const std::vector<std::string>&){path}, function_name){
   }
 
-  clw_function(const clw_function&) = delete;            
-  clw_function(clw_function&&) = delete;                 
-  clw_function& operator=(const clw_function&) = delete; 
-  clw_function& operator=(clw_function&&) = delete;      
+  ~clw_function(){
+    if (m_kernel != NULL && m_program != NULL) {
+        clw_fail_hard_on_error(clReleaseKernel(m_kernel));
+        clw_fail_hard_on_error(clReleaseProgram(m_program));
+    } else {
+         //This should never happen.
+      std::cerr << "Warning, double free of device mem. object.\n";
+    }
+  }
+
+  clw_function(const clw_function&) = delete;
+  clw_function(clw_function&&) = delete;
+  clw_function& operator=(const clw_function&) = delete;
+  clw_function& operator=(clw_function&&) = delete;
 
 
 
   template <size_t Pos, typename Arg, typename ...Rest>
   void recurse_helper(Arg& a, Rest&... rest) const{
     cl_int error;
-    
+
 
     if constexpr (std::is_arithmetic<typename std::remove_reference<Arg>::type>::value){
       error = clSetKernelArg(m_kernel, Pos, sizeof(a), &a);
@@ -80,7 +87,7 @@ class clw_function{
     }
 
     if constexpr (sizeof...(rest) > 0){
-      recurse_helper<Pos + 1>(rest...); 
+      recurse_helper<Pos + 1>(rest...);
     }
     clw_fail_hard_on_error(error);
 
@@ -102,7 +109,7 @@ class clw_function{
     static_assert((GZ % LZ) == 0, "Error, global size z is not a multiple of local size z.");
     recurse_helper<0>(arg...);
     cl_int error;
-    
+
     constexpr const std::array<size_t, 3> global_size{GX, GY, GZ};
     constexpr const std::array<size_t, 3> local_size{LX, LY, LZ};
     error = clEnqueueNDRangeKernel(m_context.get_cl_command_queue(), m_kernel, global_size.size(), NULL, global_size.data(), local_size.data(), 0, NULL, NULL);
@@ -146,8 +153,8 @@ class clw_function{
 
     if(local_size[0]*local_size[1]*local_size[2] > 256){
       std::cerr << "Warning, creating local size incompatible with AMD GPUs.\n";
-      std::cerr << "  used local size: " << local_size[0]*local_size[1]*local_size[2] << " > 256\n"; 
-    } 
+      std::cerr << "  used local size: " << local_size[0]*local_size[1]*local_size[2] << " > 256\n";
+    }
 
     assert(global_size[0] >= local_size[0]); //Error, global size x < local_size x.
     assert(global_size[1] >= local_size[1]); //Error, global size y < local_size y.
