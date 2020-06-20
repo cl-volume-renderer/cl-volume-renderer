@@ -203,7 +203,7 @@ enum event{
 };
 
 inline bool is_event(short value){
-  if(value > 0)
+  if(value > 800)
     return true;
   return false;
 }
@@ -214,7 +214,7 @@ inline enum event get_event_and_value(__read_only image3d_t reference_volume, fl
 
   const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
   *value_at_event = read_imagei(reference_volume, smp, position);
-  if(value_at_event->x > 0)
+  if(is_event(value_at_event->x))
     return Hit;
   return None;
 }
@@ -225,16 +225,18 @@ inline enum event get_event(__read_only image3d_t reference_volume, float4 posit
 
 }
 
-struct ray march(struct ray current_ray){
-  const float step_size = 0.5;//Choose this dyn. later
+struct ray march(struct ray current_ray, __read_only image3d_t sdf){
+  const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
+  float signed_distance = read_imagei(sdf, smp, make_float4(current_ray.origin,0)).x;
+  const float step_size = max(signed_distance*0.9f, 0.5f);//Choose this dyn. later
   const struct ray return_ray = {current_ray.origin + step_size*current_ray.direction, current_ray.direction};
   return return_ray;
 }
 
-struct ray march_to_next_event(struct ray current_ray, __read_only image3d_t reference_volume, enum event *event_type){
+struct ray march_to_next_event(struct ray current_ray, __read_only image3d_t reference_volume, __read_only image3d_t sdf, enum event *event_type){
   enum event internal_event = None;
-  for(int i = 0; i < 1000; ++i){
-    current_ray = march(current_ray);  
+  for(int i = 0; i < 70; ++i){
+    current_ray = march(current_ray, sdf);  
     internal_event = get_event(reference_volume, make_float4(current_ray.origin,0)); 
     if(internal_event != None){
       break;
@@ -245,7 +247,7 @@ struct ray march_to_next_event(struct ray current_ray, __read_only image3d_t ref
 }
 
 //Expect the surface ray as entry point
-uint4 compute_ao(struct ray surface_ray, __read_only image3d_t reference_volume, __global char* buffer_volume, int random_seed){
+uint4 compute_ao(struct ray surface_ray, __read_only image3d_t reference_volume, __read_only image3d_t sdf, __global char* buffer_volume, int random_seed){
   const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
   const int3 reference_dimensions = {get_image_width(reference_volume), get_image_height(reference_volume), get_image_depth(reference_volume)};
 
@@ -256,7 +258,7 @@ uint4 compute_ao(struct ray surface_ray, __read_only image3d_t reference_volume,
   int2 buffer_value = {0,0};
 
   enum event ray_event;
-  current_ray = march_to_next_event(surface_ray, reference_volume, &ray_event);
+  current_ray = march_to_next_event(surface_ray, reference_volume, sdf, &ray_event);
   if(ray_event == Hit){
     buffer_value = buffer_volume_readf(reference_dimensions, buffer_volume, make_float4(current_ray.origin,0));
     hit_information = current_ray;
@@ -265,16 +267,16 @@ uint4 compute_ao(struct ray surface_ray, __read_only image3d_t reference_volume,
       buffer_value.x += 1;
       
       current_ray = ray_bounce(current_ray, -gradient_prewitt(reference_volume, make_float4(current_ray.origin,0)),random_seed); 
-      current_ray = march(current_ray);
-      current_ray = march(current_ray);
-      current_ray = march(current_ray);
-      current_ray = march(current_ray);
-      current_ray = march(current_ray);
-      current_ray = march(current_ray);
-      current_ray = march(current_ray);
+      current_ray = march(current_ray,sdf);
+      current_ray = march(current_ray,sdf);
+      current_ray = march(current_ray,sdf);
+      current_ray = march(current_ray,sdf);
+      current_ray = march(current_ray,sdf);
+      current_ray = march(current_ray,sdf);
+      current_ray = march(current_ray,sdf);
       /////AO ray-shooting
       
-      march_to_next_event(current_ray, reference_volume, &ray_event);
+      march_to_next_event(current_ray, reference_volume,sdf, &ray_event);
       if(ray_event == Hit){
         buffer_value.y += 1;   
       }
@@ -291,7 +293,7 @@ uint4 compute_ao(struct ray surface_ray, __read_only image3d_t reference_volume,
   return return_int*2;
 }
 
-__kernel void render(__write_only image2d_t frame, __read_only image3d_t reference_volume, __global char* buffer_volume, float cam_pos_x, float cam_pos_y, float cam_pos_z, float cam_dir_x, float cam_dir_y, float cam_dir_z, int random_seed){
+__kernel void render(__write_only image2d_t frame, __read_only image3d_t reference_volume, __read_only image3d_t sdf, __global char* buffer_volume, float cam_pos_x, float cam_pos_y, float cam_pos_z, float cam_dir_x, float cam_dir_y, float cam_dir_z, int random_seed){
   unsigned int x = get_global_id(0);
   unsigned int y = get_global_id(1);
   int2 pos = {x, y};
@@ -318,7 +320,7 @@ __kernel void render(__write_only image2d_t frame, __read_only image3d_t referen
   uint4 color = {cut_result.cut_point.x, cut_result.cut_point.y, cut_result.cut_point.z,255};
   color /= 16;
   	
-  uint4 f = compute_ao(surface_ray, reference_volume, buffer_volume, random_seed);
+  uint4 f = compute_ao(surface_ray, reference_volume, sdf, buffer_volume, random_seed);
   color = f;
 
   if(color.x + color.y + color.z < 255*3)

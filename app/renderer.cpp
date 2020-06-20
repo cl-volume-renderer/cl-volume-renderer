@@ -94,7 +94,7 @@ void* renderer::render_frame(struct ui_state &state, bool &frame_changed)
 
   TIME_START();
   render_func.execute({(unsigned long)state.width, (unsigned long)state.height}, {8, 8}, frame,
-    reference_volume, buffer_volume,
+    reference_volume, sdf, buffer_volume,
     state.position.val[0], state.position.val[1], state.position.val[2],
     vec.val[0], vec.val[1], vec.val[2], random_seed);
 
