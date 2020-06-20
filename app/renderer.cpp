@@ -1,6 +1,7 @@
 #include "renderer.h"
 #include "nrrd_loader.h"
 #include "debug_helper.h"
+#include <cstdlib>
 
 std::vector<unsigned char> output = std::vector<unsigned char>(2048*1024*4);
 std::vector<char> buf_init(8*2);
@@ -89,11 +90,13 @@ void* renderer::render_frame(struct ui_state &state, bool &frame_changed)
 
   Position3D vec(state.direction_look[0], state.direction_look[1], 0.0, {1.0, 0.0, 0.0});
 
+  int random_seed = std::rand();
+
   TIME_START();
   render_func.execute({(unsigned long)state.width, (unsigned long)state.height}, {8, 8}, frame,
-    reference_volume, sdf, buffer_volume,
+    reference_volume, buffer_volume,
     state.position.val[0], state.position.val[1], state.position.val[2],
-    vec.val[0], vec.val[1], vec.val[2]);
+    vec.val[0], vec.val[1], vec.val[2], random_seed);
 
   frame.pull();
   TIME_PRINT("Render time");

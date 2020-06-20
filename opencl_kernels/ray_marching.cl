@@ -1,3 +1,5 @@
+#define MAX_STEP_COUNT 1000
+
 struct ray {
   float3 origin;
   float3 direction;
@@ -27,8 +29,15 @@ cut_min_eval(float a, float b){
   return lc;
 }
 
+inline float4 make_float4 /*great_again*/(float3 value, float other){
+  const float4 return_float = {value.x, value.y, value.z, other};
+  return return_float;
+}
 
-
+inline int4 make_int(float4 value){
+  const int4 return_int = {value.x, value.y, value.z, value.z};
+  return return_int;
+}
 
 #define MINIMUM_CUT(field) cut_min_eval((refdimensions.field - shot.origin.field) / shot.direction.field, (-shot.origin.field) / shot.direction.field)
 #define CALC_CUT_POINT(field) shot.origin + field * shot.direction;
@@ -138,14 +147,16 @@ float3 get_random_direction(float x, float y, float other){
 }
 
 //Return a sample of a point on the hemisphere towards normal
-float3 get_hemisphere_direction(float3 normal, float seed){
-  const float3 direction = {cos(seed), sin(seed), cos(seed + 111.0)};
+float3 get_hemisphere_direction(float3 normal, int seed){
+  float random = (get_global_id(0)+1)*(get_global_id(1)+1)*seed; 
+  const float3 direction = {cos(random*197), sin(random*41), cos(-random*33)}; 
   const float decider = dot(direction, normal);
   return normalize(direction * decider);
 }
 
-int2
-buffer_volume_read(int3 refdimensions, char *buffer_volume, int4 pos)
+
+
+int2 buffer_volume_read(int3 refdimensions, char *buffer_volume, int4 pos)
 {
    int2 ret = {0, 0};
 
@@ -156,141 +167,131 @@ buffer_volume_read(int3 refdimensions, char *buffer_volume, int4 pos)
 
    return ret;
 }
+int2 buffer_volume_readf(int3 refdimensions, char *buffer_volume, float4 pos){
+  return buffer_volume_read(refdimensions, buffer_volume, make_int(pos));
+}
 
 
-void
-buffer_volume_write(int3 refdimensions, char *buffer_volume, int4 pos, int2 valueb)
+void buffer_volume_write(int3 refdimensions, char *buffer_volume, int4 pos, int2 valueb)
 {
    int idx = (refdimensions.x*refdimensions.z * pos.y + refdimensions.x * pos.z + pos.x)*2;
 
    buffer_volume[idx + 0] = valueb.x;
    buffer_volume[idx + 1] = valueb.y;
 }
+void buffer_volume_writef(int3 refdimensions, char *buffer_volume, float4 pos, int2 valueb){
+  buffer_volume_write(refdimensions, buffer_volume, make_int(pos), valueb);
+}
 
+struct ray ray_bounce(struct ray current_ray, float3 normal, int seed){
+  const struct ray bounced_ray = {current_ray.origin + current_ray.direction, get_hemisphere_direction(normal, seed)};
+  return bounced_ray;
+}
 
-__kernel void render(__write_only image2d_t frame, __read_only image3d_t reference_volume, __read_only image3d_t sdf, __global char* buffer_volume, float cam_pos_x, float cam_pos_y, float cam_pos_z, float cam_dir_x, float cam_dir_y, float cam_dir_z){
-  unsigned int x = get_global_id(0);
-  unsigned int y = get_global_id(1);
-  int2 pos = {x, y};
-  int3 refdimensions = {get_image_width(reference_volume), get_image_height(reference_volume), get_image_depth(reference_volume)};
+inline bool exited_volume(__read_only image3d_t reference_volume, float4 position){
+  const int3 ref_dimensions = {get_image_width(reference_volume), get_image_height(reference_volume), get_image_depth(reference_volume)};
+  return ref_dimensions.x < position.x | ref_dimensions.y < position.y | ref_dimensions.z < position.z;
+}
 
-  write_imageui(frame, pos, (uint4){0,0,0,0});
+#define EVENT_HIT
+#define EVENT_EXIT_VOLUME
 
-  struct ray camera = {{cam_pos_x, cam_pos_y, cam_pos_z}, {cam_dir_x, cam_dir_y, cam_dir_z}};
-  //struct ray camera = {{-100,220,-100},{-0.707,0,-0.707}};
-  struct ray vray = generate_ray(camera, x,y,get_image_width(frame), get_image_height(frame));
-  struct cut_result cut_result;
+enum event{
+  None,
+  Hit,
+  Exit_volume
+};
 
-  if (in_volume(reference_volume, vray.origin) == false)
-    cut_result = cut(reference_volume, vray);
-  else {
-    struct cut_result res = {true, vray.origin};
-    cut_result = res;
-  }
+inline bool is_event(short value){
+  if(value > 0)
+    return true;
+  return false;
+}
 
-   if(!cut_result.cut) return;
+inline enum event get_event_and_value(__read_only image3d_t reference_volume, float4 position, int4* value_at_event){
+  if(exited_volume(reference_volume, position))
+    return Exit_volume;
 
   const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
-  struct ray surface_ray = {cut_result.cut_point, vray.direction};
-  float step_size = 0.5;
-  float acc_value = 0;
-  const int ao_samples = 90;
-  int4 read_position = {0,0,0,0};
-  int flesh_acc = 0;
+  *value_at_event = read_imagei(reference_volume, smp, position);
+  if(value_at_event->x > 0)
+    return Hit;
+  return None;
+}
 
-  float4 location = {surface_ray.origin.x, surface_ray.origin.y, surface_ray.origin.z, 0};
+inline enum event get_event(__read_only image3d_t reference_volume, float4 position){
+  int4 value_at_event;
+  return get_event_and_value(reference_volume, position, &value_at_event); 
+
+}
+
+struct ray march(struct ray current_ray){
+  const float step_size = 0.5;//Choose this dyn. later
+  const struct ray return_ray = {current_ray.origin + step_size*current_ray.direction, current_ray.direction};
+  return return_ray;
+}
+
+struct ray march_to_next_event(struct ray current_ray, __read_only image3d_t reference_volume, enum event *event_type){
+  enum event internal_event = None;
   for(int i = 0; i < 1000; ++i){
-    short tmp = read_imagei(sdf, smp, location).x;
-    float step_size_tmp = (float)(abs(tmp));
-    step_size_tmp = max(step_size_tmp * 1.0, 0.5);
-    float4 tmp_thing = {
-      surface_ray.direction.x * step_size_tmp,
-      surface_ray.direction.y * step_size_tmp,
-      surface_ray.direction.z * step_size_tmp,
-      0
-    };
-    location += tmp_thing;
-    if (step_size_tmp != 1.0) continue;
-    //if(value.x > 0 && value.x < 255)
-    if(tmp < 0){
-      int4 location_int = {(int)location.x, (int)location.y, (int)location.z, 0};
-      int2 valueb = buffer_volume_read(refdimensions, buffer_volume, location_int);
-      read_position.x = location.x;
-      read_position.y = location.y;
-      read_position.z = location.z;
-      if(valueb.x < ao_samples){
-        int4 value = read_imagei(reference_volume, smp, location);
-        valueb.x += 1;
-        float3 random_dir = get_random_direction(x + valueb.x,y+valueb.x,i+valueb.x);
-        float3 random_dir_len = get_random_direction(valueb.x,valueb.x*2,valueb.x*3);
-        random_dir_len *= 5;
-        random_dir = random_dir*random_dir_len;
-        //float3 random_dir = {0,1,0};
-        float4 sample_position = {read_position.x + random_dir.x, read_position.y + random_dir.y, read_position.z + random_dir.z, 0};
-        int4 sample_value = read_imagei(reference_volume, smp, sample_position);
-        if(sample_value.x > 850){
-          valueb.y += 1;
-        }
-
-
-        //struct ray ao_ray = {(float3){location_x, location_y, location_z}, get_random_direction(x,y,i)};
-        //surface_ray = ao_ray;
-        //for(int j = 0; j < 32; ++j){
-        //  int location_x = surface_ray.origin.x + step_size*surface_ray.direction.x*j*2;
-        //  int location_y = surface_ray.origin.y + step_size*surface_ray.direction.y*j*2;
-        //  int location_z = surface_ray.origin.z + step_size*surface_ray.direction.z*j*2;
-        //  int4 location = {location_x, location_y, location_z, 0};
-        //  int4 value = read_imagei(reference_volume, smp, location);
-        //  if(value.x > 850){
-        //    valueb.y += 1;
-        //    ao_hit_count = valueb.y;
-        //    break;
-        //  }
-        //}
-        buffer_volume_write(refdimensions, buffer_volume, read_position, valueb);
-      }
+    current_ray = march(current_ray);  
+    internal_event = get_event(reference_volume, make_float4(current_ray.origin,0)); 
+    if(internal_event != None){
       break;
     }
-    //acc_value += (value.x);
-
   }
-  //acc_value = (acc_value / 100);
-  int4 x_offset = {1,0,0,0};
-  int4 y_offset = {0,1,0,0};
-  int4 z_offset = {0,0,1,0};
+  *event_type = internal_event;
+  return current_ray;
+}
 
-  uint4 tcolor = {0,0,0,0};
-  float4 read_positionf = {read_position.x, read_position.y, read_position.z, 0.0};
-  int4 value_ref = read_imagei(reference_volume, smp, read_position);
-  if(value_ref.x > 0){
-    float3 normal = gradient_prewitt(reference_volume, read_positionf);
-    tcolor.x = (normal.x + 0.5)*255;
-    tcolor.y = (normal.y + 0.5)*255;
-    tcolor.z = (normal.z + 0.5)*255;
-    write_imageui(frame, pos, tcolor);
+//Expect the surface ray as entry point
+uint4 compute_ao(struct ray surface_ray, __read_only image3d_t reference_volume, __global char* buffer_volume, int random_seed){
+  const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
+  const int3 reference_dimensions = {get_image_width(reference_volume), get_image_height(reference_volume), get_image_depth(reference_volume)};
+
+  float hit_accumulator = 0.0;
+  
+  struct ray current_ray = surface_ray;
+  struct ray hit_information = {0};
+  int2 buffer_value = {0,0};
+
+  enum event ray_event;
+  current_ray = march_to_next_event(surface_ray, reference_volume, &ray_event);
+  if(ray_event == Hit){
+    buffer_value = buffer_volume_readf(reference_dimensions, buffer_volume, make_float4(current_ray.origin,0));
+    hit_information = current_ray;
+    //Compute AO further?
+    if(buffer_value.x < 100){
+      buffer_value.x += 1;
+      
+      current_ray = ray_bounce(current_ray, -gradient_prewitt(reference_volume, make_float4(current_ray.origin,0)),random_seed); 
+      current_ray = march(current_ray);
+      current_ray = march(current_ray);
+      current_ray = march(current_ray);
+      current_ray = march(current_ray);
+      current_ray = march(current_ray);
+      current_ray = march(current_ray);
+      current_ray = march(current_ray);
+      /////AO ray-shooting
+      
+      march_to_next_event(current_ray, reference_volume, &ray_event);
+      if(ray_event == Hit){
+        buffer_value.y += 1;   
+      }
+      buffer_volume_writef(reference_dimensions, buffer_volume, make_float4(hit_information.origin, 0), buffer_value);
+    }
   }else{
-    return;
+    return 0.0;
   }
-  return;
+ 
 
-
-
-  int2 valuef = buffer_volume_read(refdimensions, buffer_volume, read_position);
-
-  acc_value = 255 - valuef.y*(256/ao_samples);
-  int complete = ao_samples - valuef.x;
-
-  uint4 color = {cut_result.cut_point.x, cut_result.cut_point.y, cut_result.cut_point.z,255};
-  color /= 16;
-  color.x += acc_value + complete*2;
-  color.y += acc_value;
-  color.z += acc_value;
-
-  if(color.x + color.y + color.z < 255*3)
-  write_imageui(frame, pos, color);
+  buffer_value = buffer_volume_readf(reference_dimensions, buffer_volume, make_float4(hit_information.origin,0));
+  uint4 return_int = {100-buffer_value.y,100-buffer_value.y,100-buffer_value.y,0};
+  //uint4 return_int = {current_ray.direction.x*128,current_ray.direction.y*128,current_ray.direction.z*128,0};
+  return return_int*2;
 }
-/*
-__kernel void render(__write_only image2d_t frame, __read_only image3d_t reference_volume, __global char* buffer_volume, float cam_pos_x, float cam_pos_y, float cam_pos_z, float cam_dir_x, float cam_dir_y, float cam_dir_z){
+
+__kernel void render(__write_only image2d_t frame, __read_only image3d_t reference_volume, __global char* buffer_volume, float cam_pos_x, float cam_pos_y, float cam_pos_z, float cam_dir_x, float cam_dir_y, float cam_dir_z, int random_seed){
   unsigned int x = get_global_id(0);
   unsigned int y = get_global_id(1);
   int2 pos = {x, y};
@@ -310,81 +311,16 @@ __kernel void render(__write_only image2d_t frame, __read_only image3d_t referen
     cut_result = res;
   }
 
-   if(!cut_result.cut) return;
+  if(!cut_result.cut) return;
 
-  const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
   struct ray surface_ray = {cut_result.cut_point, vray.direction};
-  float step_size = 0.5;
-  float acc_value = 0;
-  const int ao_samples = 90;
-  int4 read_position = {0,0,0,0};
-  int flesh_acc = 0;
-  for(int i = 0; i < 1000; ++i){
-    float location_x = surface_ray.origin.x + step_size*surface_ray.direction.x*i;
-    float location_y = surface_ray.origin.y + step_size*surface_ray.direction.y*i;
-    float location_z = surface_ray.origin.z + step_size*surface_ray.direction.z*i;
-
-    float4 location = {location_x, location_y, location_z, 0};
-    int4 value = read_imagei(reference_volume, smp, location);
-    //if(value.x > 0 && value.x < 255)
-    if(value.x > 800){
-      int4 location_int = {(int)location_x, (int)location_y, (int)location_z, 0};
-      int2 valueb = buffer_volume_read(refdimensions, buffer_volume, location_int);
-      read_position.x = location_x;
-      read_position.y = location_y;
-      read_position.z = location_z;
-      if(valueb.x < ao_samples){
-        valueb.x += 1;
-        float3 random_dir = get_random_direction(x + valueb.x,y+valueb.x,i+valueb.x);
-        float3 random_dir_len = get_random_direction(valueb.x,valueb.x*2,valueb.x*3);
-        random_dir_len *= 5;
-        random_dir = random_dir*random_dir_len;
-        //float3 random_dir = {0,1,0};
-        float4 sample_position = {read_position.x + random_dir.x, read_position.y + random_dir.y, read_position.z + random_dir.z, 0};
-        int4 sample_value = read_imagei(reference_volume, smp, sample_position);
-        if(sample_value.x > 850){
-          valueb.y += 1;
-        }
-
-
-        //struct ray ao_ray = {(float3){location_x, location_y, location_z}, get_random_direction(x,y,i)};
-        //surface_ray = ao_ray;
-        //for(int j = 0; j < 32; ++j){
-        //  int location_x = surface_ray.origin.x + step_size*surface_ray.direction.x*j*2;
-        //  int location_y = surface_ray.origin.y + step_size*surface_ray.direction.y*j*2;
-        //  int location_z = surface_ray.origin.z + step_size*surface_ray.direction.z*j*2;
-        //  int4 location = {location_x, location_y, location_z, 0};
-        //  int4 value = read_imagei(reference_volume, smp, location);
-        //  if(value.x > 850){
-        //    valueb.y += 1;
-        //    ao_hit_count = valueb.y;
-        //    break;
-        //  }
-        //}
-        buffer_volume_write(refdimensions, buffer_volume, read_position, valueb);
-      }
-      break;
-    }else if(value.x > 40 && value.x < 300){
-      flesh_acc +=1;
-    }
-    //acc_value += (value.x);
-
-  }
-  //acc_value = (acc_value / 100);
-  int4 x_offset = {1,0,0,0};
-  int4 y_offset = {0,1,0,0};
-  int4 z_offset = {0,0,1,0};
-  int2 valuef = buffer_volume_read(refdimensions, buffer_volume, read_position);
-  acc_value = 255 - valuef.y*(256/ao_samples);
-  int complete = ao_samples - valuef.x;
 
   uint4 color = {cut_result.cut_point.x, cut_result.cut_point.y, cut_result.cut_point.z,255};
   color /= 16;
-  color.x += acc_value + complete*2;
-  color.y += acc_value;
-  color.z += acc_value;
+  	
+  uint4 f = compute_ao(surface_ray, reference_volume, buffer_volume, random_seed);
+  color = f;
 
   if(color.x + color.y + color.z < 255*3)
   write_imageui(frame, pos, color);
 }
-*/
