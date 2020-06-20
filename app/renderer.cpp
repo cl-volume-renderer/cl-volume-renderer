@@ -9,7 +9,7 @@ std::vector<short> ref_init(8);
 std::vector<short> sdf_init(8);
 
 renderer::renderer()
-: render_func(ctx, "ray_marching.cl", "render"),
+: render_func(ctx, std::vector<std::string>{"utility.cl", "ray_marching.cl"}, "render"),
   frame(ctx, std::move(output), {2048, 1024,1}),
   reference_volume(ctx, std::move(ref_init), {2,2,2}),
   sdf(ctx, std::move(sdf_init), {2, 2, 2}),

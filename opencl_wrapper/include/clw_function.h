@@ -27,6 +27,7 @@ class clw_function{
         exit(1);
       }
       std::string opencl_code((std::istreambuf_iterator<char>(file_stream)), std::istreambuf_iterator<char>());
+      full_code += "\n";
       full_code += opencl_code;
     }
 
