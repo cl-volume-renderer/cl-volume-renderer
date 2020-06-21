@@ -65,9 +65,17 @@ __kernel void tf_flush_color_frame(__write_only image2d_t color_frame,
    return;
 
   float value = (float)frame[get_global_id(1)*frame_size.x + get_global_id(0)];
-  int result = (value
-    /*/ (float)max_count_value*/
-    ); //*255.0f;
+
+  //move the color of all elements from 0 to max_count value to min_color to max_color. This way you can also see all the little details
+  float min_count_value = 1.0f;
+  float min_color = 80.0f;
+  float max_color = 255.0f;
+
+  int result = 0;
+  if (value > min_count_value)
+    result = min_color + (
+      (value - min_count_value) / (float)max_count_value)
+          *(max_color - min_color);
   int4 value_color = {result, result, result, 255};
 
   write_imagei(color_frame, pos, value_color);
