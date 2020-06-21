@@ -101,8 +101,9 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
     stats);
 
   //then we are counting
-  std::vector<unsigned int> frame_buffer(width*height);
+  std::vector<unsigned int> frame_buffer(width*height, 0);
   clw_vector<unsigned int> frame(ctx, std::move(frame_buffer));
+  frame.push();
 
   auto tf_frame_construction = clw_function(ctx, (const std::vector<std::string>){"utility.cl", "transpherefunction.cl"}, "tf_sort_values");
   tf_frame_construction.execute(
@@ -115,8 +116,6 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
     {evenness(tfframe.get_dimensions()[0], 16), evenness(tfframe.get_dimensions()[1], 16)},
     {16,16}, tfframe, frame, stats);
 
- /* frame.pull();
-
   for (int x = 0; x < 50; ++x) {
     for (int y = 0; y < 50; ++y) {
       printf("%d, ", frame[(y*50+x)]);
@@ -124,21 +123,22 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
     printf("\n");
   }
 
-  stats.pull();
-
-  for (int i = 0; i < 5; ++i)
-  {
+  for (int i = 0; i < 5; ++i) {
     printf("%d\n", stats[i]);
   }
 
-   tfframe.pull();
-   for (int x = 0; x < 50; ++x) {
-     for (int y = 0; y < 50; ++y) {
-       printf("%d, ", tfframe[(y*50+x)*4]);
-     }
-     printf("\n");
-   }*/
+  for (int x = 0; x < 50; ++x) {
+    for (int y = 0; y < 50; ++y) {
+      printf("%d, ", tfframe[(y*50+x)*4]);
+    }
+    printf("\n");
+  }
+
+  frame.pull();
+  stats.pull();
   tfframe.pull();
+  tfframe.pull();
+
   return &tfframe[0];
 }
 
