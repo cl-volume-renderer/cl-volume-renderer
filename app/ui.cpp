@@ -1,7 +1,9 @@
 #include "ui.h"
+#include <tf_part.h>
 #include <SDL.h>
 #include <string>
 #include <SDL_opengl.h>
+
 #include <imgui_impl_sdl.h>
 #include <imgui_impl_opengl2.h>
 
@@ -133,6 +135,11 @@ keysymbol_handle(struct ui_state *state, std::string key, Uint16 mod)
   state->direction_look[1] = fmod(state->direction_look[1], 2*M_PI);
 }
 
+struct ImGui_Ui_State{
+  int new_index = 0;
+  std::vector<tf_selection*> selection;
+};
+
 void ui::run(frame_emitter *emitter) {
 
     char file_path[1024];
@@ -140,11 +147,15 @@ void ui::run(frame_emitter *emitter) {
     bool done = false;
     ImGuiIO& io = ImGui::GetIO();
     struct ui_state state = {path, true, 0, 0, {-200,200,-200}, {0, 0}, true};
+    ImGui_Ui_State imgui_ui_state;
+
     SDL_GetWindowSize(window, &state.width, &state.height); //We have a fixed window, so that is enough
     snprintf(file_path, 1024, "%s", path.c_str());
     nrrd_loader loader;
     volume_block v = loader.load_file(path);
     emitter->image_set(&v);
+
+    imgui_ui_state.selection.push_back(new tf_rect_selection(0, 0.0f, 0.1f, 0.0f, 0.1f));
 
     const int tf_size[] = {500, 500};
     glBindTexture(GL_TEXTURE_2D, tftexture);
@@ -180,6 +191,36 @@ void ui::run(frame_emitter *emitter) {
 
         ImGui::Begin("Transphere function");
         ImGui::Image((ImTextureID)(intptr_t)tftexture, {500,500});
+
+        ImVec2 win_pos = ImGui::GetWindowPos();
+        ImVec2 content_region = ImGui::GetWindowContentRegionMin();
+        ImVec2 pos = {win_pos.x + content_region.x, win_pos.y + content_region.y};
+        ImVec2 size = {(float)tf_size[0], (float)tf_size[1]};
+
+        for (auto selection : imgui_ui_state.selection) {
+          selection->render_ui(pos, size);
+          ImGui::Separator();
+        }
+
+        const char *items[] = {"Rect", "Circle Segment"};
+
+        if (ImGui::Combo("New:", &imgui_ui_state.new_index, items, 2)) {
+          if (imgui_ui_state.new_index == 0) {
+            imgui_ui_state.selection.push_back(new tf_rect_selection(imgui_ui_state.selection.size(), 0.0f, 0.1f, 0.0f, 0.1f));
+          } else if (imgui_ui_state.new_index == 1) {
+            imgui_ui_state.selection.push_back(new tf_circle_segment_selection(imgui_ui_state.selection.size(), 0.0, 0.0, 0.1, 0.1));
+          }
+        }
+        if (ImGui::Button("Flush Caches & All")) {
+          Histogram_Stats hs = emitter->fetch_histogram_stats();
+          std::string cl_code = "inline bool is_event(short value, short gradient){\n";
+          for(auto selection : imgui_ui_state.selection) {
+            cl_code += selection->create_cl_condition(hs);
+          }
+          cl_code += "  \n  return false;\n}\n";
+          std::cout << cl_code;
+          //FIXME render the sdf again
+        }
         ImGui::End();
 
         if (!!strcmp(file_path, path.c_str()))

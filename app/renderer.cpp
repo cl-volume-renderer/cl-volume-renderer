@@ -83,6 +83,10 @@ void renderer::image_set(volume_block *b)
   sdf.push();
 }
 
+Histogram_Stats renderer::fetch_histogram_stats() {
+  return hs;
+}
+
 void* renderer::render_tf(const unsigned int height, const unsigned int width)
 {
   std::vector<unsigned char> tf_buffer(height*width*4);
@@ -118,6 +122,7 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
     stats);
   //build a map from the value to the position of ranking all values in the frame
   frame.pull();
+
   std::set<int, std::less<int>> possible_histories;
   for (unsigned int y = 0; y < height; ++y) {
     for (unsigned int x = 0; x < width; ++x) {
@@ -144,6 +149,10 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
   tf_frame_flush.execute(
     {evenness(tfframe.get_dimensions()[0], 16), evenness(tfframe.get_dimensions()[1], 16)},
     {16,16}, tfframe, frame, history, (int)history.size(), stats);
+
+  stats.pull();
+  hs = Histogram_Stats(stats);
+
   /*
   frame.pull();
   stats.pull();

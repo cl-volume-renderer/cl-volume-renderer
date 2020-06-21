@@ -8,6 +8,24 @@
 #include <clw_image.h>
 #include <clw_context.h>
 
+struct Histogram_Stats{
+  float min_v;
+  float max_v;
+  float min_g;
+  float max_g;
+  template <typename T>
+  Histogram_Stats(const T& stats) {
+    assert(stats.size() >= 4);
+    min_v = stats[0];
+    max_v = stats[1];
+    min_g = stats[2];
+    max_g = stats[3];
+  }
+  Histogram_Stats() {
+    min_v = max_v = min_g = max_g = 0;
+  }
+};
+
 struct Position3D {
    float val[3];
    Position3D(double alpha, double beta, double gamma, Position3D base) {
@@ -82,6 +100,7 @@ class frame_emitter {
     virtual void image_set(volume_block *b) = 0;
     virtual void* render_frame(struct ui_state &state, bool &frame_changed) = 0;
     virtual void* render_tf(const unsigned int width, const unsigned int height) = 0;
+    virtual Histogram_Stats fetch_histogram_stats() = 0;
 };
 
 class ui {
