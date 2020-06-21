@@ -2,6 +2,7 @@
 #include "nrrd_loader.h"
 #include "debug_helper.h"
 #include <cstdlib>
+#include <set>
 
 std::vector<unsigned char> output = std::vector<unsigned char>(2048*1024*4);
 std::vector<unsigned char> tfoutput = std::vector<unsigned char>(2*2*4);
@@ -115,12 +116,40 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
     {evenness(volume_size[0], 8), evenness(volume_size[1], 8), evenness(volume_size[2], 8)},
     {4,4,4}, reference_volume, frame, width, height,
     stats);
+  //build a map from the value to the position of ranking all values in the frame
+  frame.pull();
+  std::set<int, std::less<int>> possible_histories;
+  for (unsigned int y = 0; y < height; ++y) {
+    for (unsigned int x = 0; x < width; ++x) {
+      int value = frame[x*height+y];
+      if (value != 0) {
+        //we round a number onto the next lower 10'th position
+        //what we could observe in most datasets is that higher counts are more likely than lower,
+        //but lower counts are producing more details, so we correct in this way
+        int roundingpart = std::max((int)(pow(10, (std::floor(std::log10(value))) - 1)), (int)1);
+        int corrected_value = floor(value/roundingpart)*roundingpart;
+        frame[x*height+y] = corrected_value;
+        possible_histories.insert(corrected_value);
+      }
+    }
+  }
+  frame.push();
+
+  std::vector<int> history_buffer;
+  std::copy(possible_histories.begin(), possible_histories.end(), std::back_inserter(history_buffer));
+  clw_vector<int> history(ctx, std::move(history_buffer));
+  history.push();
+
+  for (int i = 0; i < history.size(); ++i)
+  {
+    printf("%d\n", history[i]);
+  }
 
   auto tf_frame_flush = clw_function(ctx, "transpherefunction.cl", "tf_flush_color_frame");
   tf_frame_flush.execute(
     {evenness(tfframe.get_dimensions()[0], 16), evenness(tfframe.get_dimensions()[1], 16)},
-    {16,16}, tfframe, frame, stats);
-/*
+    {16,16}, tfframe, frame, history, (int)history.size(), stats);
+  /*
   frame.pull();
   stats.pull();
   tfframe.pull();
@@ -140,8 +169,8 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
       printf("%d, ", tfframe[(y*50+x)*4]);
     }
     printf("\n");
-  }*/
-
+  }
+*/
   tfframe.pull();
   return &tfframe[0];
 }

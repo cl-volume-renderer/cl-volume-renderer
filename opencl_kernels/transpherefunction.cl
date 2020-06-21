@@ -53,7 +53,7 @@ __kernel void tf_sort_values(__read_only image3d_t reference_volume, __global ui
 }
 
 __kernel void tf_flush_color_frame(__write_only image2d_t color_frame,
-  __global int *frame, __global int *stats)
+  __global int *frame, __global int *lookup, int lookup_len, __global int *stats)
 {
    const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
 
@@ -64,18 +64,25 @@ __kernel void tf_flush_color_frame(__write_only image2d_t color_frame,
   if (pos.x >= frame_size.x || pos.y >= frame_size.y)
    return;
 
-  float value = (float)frame[get_global_id(1)*frame_size.x + get_global_id(0)];
+  int value = frame[get_global_id(1)*frame_size.x + get_global_id(0)];
+  int local_value = -1;
+  for(int i = 0; i < lookup_len; i++) {
+    if (lookup[i] == value) {
+      local_value = i;
+      break;
+    }
+  }
 
   //move the color of all elements from 0 to max_count value to min_color to max_color. This way you can also see all the little details
-  float min_count_value = 1.0f;
-  float min_color = 80.0f;
+  float min_color = 20.0f;
   float max_color = 255.0f;
 
   int result = 0;
-  if (value > min_count_value)
+  if (local_value > -1)
     result = min_color + (
-      (value - min_count_value) / (float)max_count_value)
+      ((float)local_value) / (float)lookup_len)
           *(max_color - min_color);
+
   int4 value_color = {result, result, result, 255};
 
   write_imagei(color_frame, pos, value_color);
