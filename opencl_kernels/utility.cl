@@ -1,6 +1,5 @@
 inline float4 make_float4 /*great_again*/(float3 value, float other){
-  const float4 return_float = {value.x, value.y, value.z, other};
-  return return_float;
+  return (float4)(value, other);
 }
 
 inline int4 make_int(float4 value){
