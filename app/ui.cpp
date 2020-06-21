@@ -176,13 +176,10 @@ void ui::run(frame_emitter *emitter) {
         ImGui::Text("Direction-look:");
         ImGui::Text(" Local  Y: %.3f", state.direction_look[0]);
         ImGui::Text(" Local  Z: %.3f", state.direction_look[1]);
-        /*ImGui::EndFrame();
+        ImGui::End();
 
-        ImGui::NewFrame();
-        ImGui::Begin("Transphere function");   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)*/
+        ImGui::Begin("Transphere function");
         ImGui::Image((ImTextureID)(intptr_t)tftexture, {500,500});
-        //ImGui::EndFrame();
-
         ImGui::End();
 
         if (!!strcmp(file_path, path.c_str()))
