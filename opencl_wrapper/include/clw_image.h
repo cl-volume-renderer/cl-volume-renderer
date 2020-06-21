@@ -197,6 +197,18 @@ class clw_image {
     return m_host_array.size();
   }
 
+  /// Returns the number of pixels
+  /// Each pixel is a combination of values
+  /// depending on the number of channels
+  size_t pixel_count() const{
+    return m_host_array.size()/ChannelSize;
+  }
+
+  /// Returns the number of channels per pixel
+  size_t channels() const{
+    return ChannelSize;
+  }
+
   /// Returns the dimensions of the image
   const std::array<size_t,3>& get_dimensions(){
     return m_dimensions;
