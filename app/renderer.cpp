@@ -140,11 +140,6 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
   clw_vector<int> history(ctx, std::move(history_buffer));
   history.push();
 
-  for (int i = 0; i < history.size(); ++i)
-  {
-    printf("%d\n", history[i]);
-  }
-
   auto tf_frame_flush = clw_function(ctx, "transpherefunction.cl", "tf_flush_color_frame");
   tf_frame_flush.execute(
     {evenness(tfframe.get_dimensions()[0], 16), evenness(tfframe.get_dimensions()[1], 16)},
