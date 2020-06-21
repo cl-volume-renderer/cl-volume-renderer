@@ -104,7 +104,7 @@ inline bool exited_volume(__read_only image3d_t reference_volume, float4 positio
   return ref_dimensions.x < position.x | ref_dimensions.y < position.y | ref_dimensions.z < position.z;
 }
 
-enum event{ 
+enum event{
   None,
   Hit,
   Exit_volume
@@ -120,7 +120,7 @@ inline enum event get_event_and_value(__read_only image3d_t reference_volume, fl
   if(exited_volume(reference_volume, position))
     return Exit_volume;
 
-  const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
+  const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
   *value_at_event = read_imagei(reference_volume, smp, position);
   if(is_event(value_at_event->x))
     return Hit;

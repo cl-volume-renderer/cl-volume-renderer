@@ -1,6 +1,6 @@
 
 __kernel void create_boolean_image(__read_only image3d_t reference_volume, __write_only image3d_t sdf_image){
-   const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
+   const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
    int4 location = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
    int4 reference_size = get_image_dim(reference_volume);
 
@@ -21,7 +21,7 @@ __kernel void create_boolean_image(__read_only image3d_t reference_volume, __wri
 }
 
 __kernel void create_signed_distance_field(__read_only image3d_t sdf_image, __write_only image3d_t signed_distance_field, __global int *change_counter){
-  const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
+  const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
   int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
   int4 reference_size = get_image_dim(sdf_image);
 

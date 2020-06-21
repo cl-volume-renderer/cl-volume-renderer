@@ -6,11 +6,11 @@
 
 //Expect the surface ray as entry point
 uint4 compute_ao(struct ray surface_ray, __read_only image3d_t reference_volume, __read_only image3d_t sdf, __global char* buffer_volume, int random_seed){
-  const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
+  const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
   const int3 reference_dimensions = {get_image_width(reference_volume), get_image_height(reference_volume), get_image_depth(reference_volume)};
 
   float hit_accumulator = 0.0;
-  
+
   struct ray current_ray = surface_ray;
   struct ray hit_information = {0};
   int2 buffer_value = {0,0};
@@ -23,8 +23,8 @@ uint4 compute_ao(struct ray surface_ray, __read_only image3d_t reference_volume,
     //Compute AO further?
     if(buffer_value.x < 100){
       buffer_value.x += 1;
-      
-      current_ray = ray_bounce(current_ray, -normalize(gradient_prewitt_nn(reference_volume, make_float4(current_ray.origin,0))),random_seed); 
+
+      current_ray = ray_bounce(current_ray, -normalize(gradient_prewitt_nn(reference_volume, make_float4(current_ray.origin,0))),random_seed);
       current_ray = march(current_ray,sdf);
       current_ray = march(current_ray,sdf);
       current_ray = march(current_ray,sdf);
@@ -33,17 +33,17 @@ uint4 compute_ao(struct ray surface_ray, __read_only image3d_t reference_volume,
       current_ray = march(current_ray,sdf);
       current_ray = march(current_ray,sdf);
       /////AO ray-shooting
-      
+
       march_to_next_event(current_ray, reference_volume,sdf, &ray_event);
       if(ray_event == Hit){
-        buffer_value.y += 1;   
+        buffer_value.y += 1;
       }
       buffer_volume_writef(reference_dimensions, buffer_volume, make_float4(hit_information.origin, 0), buffer_value);
     }
   }else{
     return 0.0;
   }
- 
+
 
   buffer_value = buffer_volume_readf(reference_dimensions, buffer_volume, make_float4(hit_information.origin,0));
   uint4 return_int = {100-buffer_value.y,100-buffer_value.y,100-buffer_value.y,0};
@@ -77,7 +77,7 @@ __kernel void render(__write_only image2d_t frame, __read_only image3d_t referen
 
   uint4 color = {cut_result.cut_point.x, cut_result.cut_point.y, cut_result.cut_point.z,255};
   color /= 16;
-  	
+
   uint4 f = compute_ao(surface_ray, reference_volume, sdf, buffer_volume, random_seed);
   color = f;
 
