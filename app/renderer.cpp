@@ -116,6 +116,7 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
     {evenness(tfframe.get_dimensions()[0], 16), evenness(tfframe.get_dimensions()[1], 16)},
     {16,16}, tfframe, frame, stats);
 
+/*
   for (int x = 0; x < 50; ++x) {
     for (int y = 0; y < 50; ++y) {
       printf("%d, ", frame[(y*50+x)]);
@@ -133,7 +134,7 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
     }
     printf("\n");
   }
-
+*/
   frame.pull();
   stats.pull();
   tfframe.pull();
