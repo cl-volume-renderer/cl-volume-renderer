@@ -64,7 +64,7 @@ __kernel void tf_flush_color_frame(__write_only image2d_t color_frame,
   if (pos.x >= frame_size.x || pos.y >= frame_size.y)
    return;
 
-  int value = frame[get_global_id(1)*frame_size.x + get_global_id(0)];
+  int value = frame[get_global_id(0)*frame_size.y + (frame_size.y - get_global_id(1) - 1)];
   int local_value = -1;
   for(int i = 0; i < lookup_len; i++) {
     if (lookup[i] == value) {
