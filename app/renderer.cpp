@@ -90,7 +90,12 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
 
   //time for the TF
   //first we fetch the min & max of both, the values and the
-  std::vector<int> stats_buffer {std::numeric_limits<int>::max(), std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), std::numeric_limits<int>::min(), std::numeric_limits<int>::min()};
+  std::vector<int> stats_buffer {
+    std::numeric_limits<int>::max(),
+    std::numeric_limits<int>::min(),
+    std::numeric_limits<int>::max(),
+    std::numeric_limits<int>::min(),
+    std::numeric_limits<int>::min()};
   clw_vector<int> stats(ctx, std::move(stats_buffer));
   stats.push();
 
@@ -107,7 +112,7 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
 
   auto tf_frame_construction = clw_function(ctx, "transpherefunction.cl", "tf_sort_values");
   tf_frame_construction.execute(
-    {evenness(volume_size[0], 8), evenness(volume_size[2], 8), evenness(volume_size[2], 8)},
+    {evenness(volume_size[0], 8), evenness(volume_size[1], 8), evenness(volume_size[2], 8)},
     {4,4,4}, reference_volume, frame, width, height,
     stats);
 
@@ -115,8 +120,10 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
   tf_frame_flush.execute(
     {evenness(tfframe.get_dimensions()[0], 16), evenness(tfframe.get_dimensions()[1], 16)},
     {16,16}, tfframe, frame, stats);
-
 /*
+  frame.pull();
+  stats.pull();
+  tfframe.pull();
   for (int x = 0; x < 50; ++x) {
     for (int y = 0; y < 50; ++y) {
       printf("%d, ", frame[(y*50+x)]);
@@ -133,13 +140,9 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
       printf("%d, ", tfframe[(y*50+x)*4]);
     }
     printf("\n");
-  }
-*/
-  frame.pull();
-  stats.pull();
-  tfframe.pull();
-  tfframe.pull();
+  }*/
 
+  tfframe.pull();
   return &tfframe[0];
 }
 
