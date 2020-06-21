@@ -11,7 +11,7 @@ template <typename TDevice>
 class clw_vector {
   using TInternal = typename std::remove_const<TDevice>::type;
  public:
-  clw_vector(const clw_context& context, std::vector<TInternal>&& data)
+  clw_vector(const clw_context& context, std::vector<TInternal>&& data, const bool push_on_construction = false)
       : m_context(&context) {
     cl_int error;
     m_host_array = data;
@@ -28,6 +28,9 @@ class clw_vector {
     }
 
     clw_fail_hard_on_error(error);
+    if(push_on_construction){
+      push();
+    }
   }
 
   ~clw_vector() {

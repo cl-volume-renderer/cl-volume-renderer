@@ -12,7 +12,7 @@ template <typename TDevice, size_t ChannelSize=1>
 class clw_image {
   using TInternal = typename std::remove_const<TDevice>::type;
  public:
-  constexpr clw_image(const clw_context& context, std::vector<TInternal>&& data, std::array<size_t, 3> dimensions)
+  constexpr clw_image(const clw_context& context, std::vector<TInternal>&& data, std::array<size_t, 3> dimensions, const bool push_on_construction = false)
       : m_context(&context) {
     cl_int error{0};
     m_host_array = data;
@@ -128,7 +128,10 @@ class clw_image {
 
     m_device_array = clCreateImage(context.get_cl_context(), access_right, &image_format, &image_desc, NULL, &error);
     clw_fail_hard_on_error(error);
-      }
+    if(push_on_construction){
+      push();
+    }
+  }
 
   ~clw_image() {
     if (m_device_array != NULL) {
