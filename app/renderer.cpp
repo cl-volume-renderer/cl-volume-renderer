@@ -4,6 +4,7 @@
 #include <cstdlib>
 
 std::vector<unsigned char> output = std::vector<unsigned char>(2048*1024*4);
+std::vector<unsigned char> tfoutput = std::vector<unsigned char>(2*2*4);
 std::vector<char> buf_init(8*2);
 std::vector<short> ref_init(8);
 std::vector<short> sdf_init(8);
@@ -13,7 +14,8 @@ renderer::renderer()
   frame(ctx, std::move(output), {2048, 1024,1}),
   reference_volume(ctx, std::move(ref_init), {2,2,2}),
   sdf(ctx, std::move(sdf_init), {2, 2, 2}),
-  buffer_volume(ctx, std::move(buf_init))
+  buffer_volume(ctx, std::move(buf_init)),
+  tfframe(ctx, std::move(tfoutput), {2, 2})
 {
 
 }
@@ -29,11 +31,12 @@ evenness(const unsigned int g, const unsigned int l)
    unsigned int mod = g % l;
    if (g % l == 0) return g;
 
-   return g + 8 - mod;
+   return g + l - mod;
 }
 
 void renderer::image_set(volume_block *b)
 {
+  volume_size = {(unsigned int)b->m_voxel_count_x, (unsigned int)b->m_voxel_count_y, (unsigned int)b->m_voxel_size_z};
   //resources for rendering
   std::vector<char> buffer(b->m_voxel_count_x * b->m_voxel_count_y * b->m_voxel_count_z*2, 0);
   buffer_volume = clw_vector<char>(ctx, std::move(buffer));
@@ -77,6 +80,66 @@ void renderer::image_set(volume_block *b)
   //this here is needed for nvidia to ensure that in another call with sdf as parameter to not contain gargabe
   sdf.pull();
   sdf.push();
+}
+
+void* renderer::render_tf(const unsigned int height, const unsigned int width)
+{
+  std::vector<unsigned char> tf_buffer(height*width*4);
+  clw_image<unsigned char, 4> tmp(ctx, std::move(tf_buffer), {width, height});
+  tfframe = std::move(tmp);
+
+  //time for the TF
+  //first we fetch the min & max of both, the values and the
+  std::vector<int> stats_buffer {std::numeric_limits<int>::max(), std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), std::numeric_limits<int>::min(), std::numeric_limits<int>::min()};
+  clw_vector<int> stats(ctx, std::move(stats_buffer));
+  stats.push();
+
+  auto tf_min_max_construction = clw_function(ctx, (const std::vector<std::string>){"utility.cl", "transpherefunction.cl"}, "tf_fetch_min_max");
+  tf_min_max_construction.execute(
+    {evenness(volume_size[0], 8), evenness(volume_size[1], 8), evenness(volume_size[2], 8)},
+    {4,4,4}, reference_volume,
+    stats);
+
+  //then we are counting
+  std::vector<unsigned int> frame_buffer(width*height);
+  clw_vector<unsigned int> frame(ctx, std::move(frame_buffer));
+
+  auto tf_frame_construction = clw_function(ctx, (const std::vector<std::string>){"utility.cl", "transpherefunction.cl"}, "tf_sort_values");
+  tf_frame_construction.execute(
+    {evenness(volume_size[0], 8), evenness(volume_size[2], 8), evenness(volume_size[2], 8)},
+    {4,4,4}, reference_volume, frame, width, height,
+    stats);
+
+  auto tf_frame_flush = clw_function(ctx, (const std::vector<std::string>){"utility.cl", "transpherefunction.cl"}, "tf_flush_color_frame");
+  tf_frame_flush.execute(
+    {evenness(tfframe.get_dimensions()[0], 16), evenness(tfframe.get_dimensions()[1], 16)},
+    {16,16}, tfframe, frame, stats);
+
+ /* frame.pull();
+
+  for (int x = 0; x < 50; ++x) {
+    for (int y = 0; y < 50; ++y) {
+      printf("%d, ", frame[(y*50+x)]);
+    }
+    printf("\n");
+  }
+
+  stats.pull();
+
+  for (int i = 0; i < 5; ++i)
+  {
+    printf("%d\n", stats[i]);
+  }
+
+   tfframe.pull();
+   for (int x = 0; x < 50; ++x) {
+     for (int y = 0; y < 50; ++y) {
+       printf("%d, ", tfframe[(y*50+x)*4]);
+     }
+     printf("\n");
+   }*/
+  tfframe.pull();
+  return &tfframe[0];
 }
 
 void* renderer::render_frame(struct ui_state &state, bool &frame_changed)

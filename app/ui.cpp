@@ -41,6 +41,9 @@ ui::ui(const char *raw_path) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
+  glGenTextures(1, texture);
+  tftexture = texture[0];
+
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
@@ -143,6 +146,12 @@ void ui::run(frame_emitter *emitter) {
     volume_block v = loader.load_file(path);
     emitter->image_set(&v);
 
+    const int tf_size[] = {500, 500};
+    glBindTexture(GL_TEXTURE_2D, tftexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tf_size[0], tf_size[1], 0, GL_RGBA, GL_UNSIGNED_BYTE, emitter->render_tf(tf_size[0], tf_size[1]));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
     while (!done) {
         bool frame_changed;
         SDL_Event event;
@@ -167,6 +176,12 @@ void ui::run(frame_emitter *emitter) {
         ImGui::Text("Direction-look:");
         ImGui::Text(" Local  Y: %.3f", state.direction_look[0]);
         ImGui::Text(" Local  Z: %.3f", state.direction_look[1]);
+        /*ImGui::EndFrame();
+
+        ImGui::NewFrame();
+        ImGui::Begin("Transphere function");   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)*/
+        ImGui::Image((ImTextureID)(intptr_t)tftexture, {500,500});
+        //ImGui::EndFrame();
 
         ImGui::End();
 

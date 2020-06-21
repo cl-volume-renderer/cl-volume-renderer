@@ -81,6 +81,7 @@ class frame_emitter {
     virtual ~frame_emitter() { };
     virtual void image_set(volume_block *b) = 0;
     virtual void* render_frame(struct ui_state &state, bool &frame_changed) = 0;
+    virtual void* render_tf(const unsigned int width, const unsigned int height) = 0;
 };
 
 class ui {
@@ -88,6 +89,7 @@ class ui {
   SDL_Window *window;
   SDL_GLContext gl_context;
   GLuint frametexture;
+  GLuint tftexture;
   std::string path;
   public:
     ui(const char *path);

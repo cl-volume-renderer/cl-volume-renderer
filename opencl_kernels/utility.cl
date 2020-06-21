@@ -102,10 +102,9 @@ bool in_volume(__read_only image3d_t reference_volume, float3 point) {
   return false;
 }
 
-
-float3 gradient_prewitt(__read_only image3d_t reference_volume, float4 position){
+float3 gradient_prewitt_nn(__read_only image3d_t reference_volume, float4 position){
   const float4 p = position;
-	const sampler_t sampler = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
+  const sampler_t sampler = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
   const float4 x = {1,0,0,0};
   const float4 y = {0,1,0,0};
   const float4 z = {0,0,1,0};
@@ -117,7 +116,7 @@ float3 gradient_prewitt(__read_only image3d_t reference_volume, float4 position)
   dx -= read_imagei(reference_volume, sampler, p - x - y).x;
   dx -= read_imagei(reference_volume, sampler, p - x    ).x;
 
-	int dy = 0;
+  int dy = 0;
   dy += read_imagei(reference_volume, sampler, p + y + x).x;
   dy += read_imagei(reference_volume, sampler, p + y - x).x;
   dy += read_imagei(reference_volume, sampler, p + y    ).x;
@@ -126,7 +125,7 @@ float3 gradient_prewitt(__read_only image3d_t reference_volume, float4 position)
   dy -= read_imagei(reference_volume, sampler, p - y    ).x;
 
 
-	int dz = 0;
+  int dz = 0;
   dz += read_imagei(reference_volume, sampler, p + z + x).x;
   dz += read_imagei(reference_volume, sampler, p + z - x).x;
   dz += read_imagei(reference_volume, sampler, p + z    ).x;
@@ -134,7 +133,12 @@ float3 gradient_prewitt(__read_only image3d_t reference_volume, float4 position)
   dz -= read_imagei(reference_volume, sampler, p - z - x).x;
   dz -= read_imagei(reference_volume, sampler, p - z    ).x;
 
-	float3 return_float = {dx,dy,dz};
+  float3 return_float = {dx,dy,dz};
+  return return_float;
+}
+
+float3 gradient_prewitt(__read_only image3d_t reference_volume, float4 position){
+	float3 return_float = gradient_prewitt_nn(reference_volume, position);
 	return normalize(return_float);
 }
 
@@ -147,8 +151,8 @@ float3 get_random_direction(float x, float y, float other){
 
 //Return a sample of a point on the hemisphere towards normal
 float3 get_hemisphere_direction(float3 normal, int seed){
-  float random = (get_global_id(0)+1)*(get_global_id(1)+1)*seed; 
-  const float3 direction = {cos(random*197), sin(random*41), cos(-random*33)}; 
+  float random = (get_global_id(0)+1)*(get_global_id(1)+1)*seed;
+  const float3 direction = {cos(random*197), sin(random*41), cos(-random*33)};
   const float decider = dot(direction, normal);
   return normalize(direction * decider);
 }
@@ -220,7 +224,7 @@ inline enum event get_event_and_value(__read_only image3d_t reference_volume, fl
 
 inline enum event get_event(__read_only image3d_t reference_volume, float4 position){
   int4 value_at_event;
-  return get_event_and_value(reference_volume, position, &value_at_event); 
+  return get_event_and_value(reference_volume, position, &value_at_event);
 
 }
 
@@ -235,8 +239,8 @@ struct ray march(struct ray current_ray, __read_only image3d_t sdf){
 struct ray march_to_next_event(struct ray current_ray, __read_only image3d_t reference_volume, __read_only image3d_t sdf, enum event *event_type){
   enum event internal_event = None;
   for(int i = 0; i < 70; ++i){
-    current_ray = march(current_ray, sdf);  
-    internal_event = get_event(reference_volume, make_float4(current_ray.origin,0)); 
+    current_ray = march(current_ray, sdf);
+    internal_event = get_event(reference_volume, make_float4(current_ray.origin,0));
     if(internal_event != None){
       break;
     }
