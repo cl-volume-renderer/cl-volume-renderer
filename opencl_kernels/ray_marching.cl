@@ -1,5 +1,8 @@
 #define MAX_STEP_COUNT 1000
-
+#clw_include_once "utility.cl"
+#clw_include_once "utility_ray.cl"
+#clw_include_once "utility_sampling.cl"
+#clw_include_once "utility_filter.cl"
 
 //Expect the surface ray as entry point
 uint4 compute_ao(struct ray surface_ray, __read_only image3d_t reference_volume, __read_only image3d_t sdf, __global char* buffer_volume, int random_seed){
@@ -21,7 +24,7 @@ uint4 compute_ao(struct ray surface_ray, __read_only image3d_t reference_volume,
     if(buffer_value.x < 100){
       buffer_value.x += 1;
       
-      current_ray = ray_bounce(current_ray, -gradient_prewitt(reference_volume, make_float4(current_ray.origin,0)),random_seed); 
+      current_ray = ray_bounce(current_ray, -normalize(gradient_prewitt_nn(reference_volume, make_float4(current_ray.origin,0))),random_seed); 
       current_ray = march(current_ray,sdf);
       current_ray = march(current_ray,sdf);
       current_ray = march(current_ray,sdf);

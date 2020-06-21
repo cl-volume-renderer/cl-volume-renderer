@@ -81,13 +81,13 @@ class clw_function{
     
     std::string line;
     while(std::getline(file_stream, line)){
-      size_t include_position = line.find("#clw_include");
+      size_t include_position = line.find("#clw_include_once");
       if(include_position != std::string::npos){
         size_t include_start = line.find_first_of('"', include_position);
         size_t include_end = line.find_first_of('"', include_start + 1);
         if(include_start == std::string::npos || include_end == std::string::npos){
           std::cout << "Error when parsing OpenCL program: \n"
-                    << " #cl_include not of the expected format: cl_include \"...\"\n";
+                    << " #cl_include not of the expected format: clw_include_once \"...\"\n";
           exit(1);
         }
         include_start++;

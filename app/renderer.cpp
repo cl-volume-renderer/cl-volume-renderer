@@ -10,7 +10,7 @@ std::vector<short> ref_init(8);
 std::vector<short> sdf_init(8);
 
 renderer::renderer()
-: render_func(ctx, std::vector<std::string>{"utility.cl", "ray_marching.cl"}, "render"),
+: render_func(ctx, "ray_marching.cl", "render"),
   frame(ctx, std::move(output), {2048, 1024,1}),
   reference_volume(ctx, std::move(ref_init), {2,2,2}),
   sdf(ctx, std::move(sdf_init), {2, 2, 2}),
@@ -94,7 +94,7 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
   clw_vector<int> stats(ctx, std::move(stats_buffer));
   stats.push();
 
-  auto tf_min_max_construction = clw_function(ctx, (const std::vector<std::string>){"utility.cl", "transpherefunction.cl"}, "tf_fetch_min_max");
+  auto tf_min_max_construction = clw_function(ctx, "transpherefunction.cl", "tf_fetch_min_max");
   tf_min_max_construction.execute(
     {evenness(volume_size[0], 8), evenness(volume_size[1], 8), evenness(volume_size[2], 8)},
     {4,4,4}, reference_volume,
@@ -105,13 +105,13 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
   clw_vector<unsigned int> frame(ctx, std::move(frame_buffer));
   frame.push();
 
-  auto tf_frame_construction = clw_function(ctx, (const std::vector<std::string>){"utility.cl", "transpherefunction.cl"}, "tf_sort_values");
+  auto tf_frame_construction = clw_function(ctx, "transpherefunction.cl", "tf_sort_values");
   tf_frame_construction.execute(
     {evenness(volume_size[0], 8), evenness(volume_size[2], 8), evenness(volume_size[2], 8)},
     {4,4,4}, reference_volume, frame, width, height,
     stats);
 
-  auto tf_frame_flush = clw_function(ctx, (const std::vector<std::string>){"utility.cl", "transpherefunction.cl"}, "tf_flush_color_frame");
+  auto tf_frame_flush = clw_function(ctx, "transpherefunction.cl", "tf_flush_color_frame");
   tf_frame_flush.execute(
     {evenness(tfframe.get_dimensions()[0], 16), evenness(tfframe.get_dimensions()[1], 16)},
     {16,16}, tfframe, frame, stats);

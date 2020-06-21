@@ -1,3 +1,5 @@
+#clw_include_once "utility_sampling.cl"
+#clw_include_once "utility_filter.cl"
 #define MIN_VALUE 0
 #define MAX_VALUE 1
 #define MIN_GRADIENT 2
