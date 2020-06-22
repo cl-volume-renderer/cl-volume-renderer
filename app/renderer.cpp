@@ -187,8 +187,9 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
 void renderer::next_event_code_set(const std::string cl_code)
 {
    local_cl_code = cl_code;
-   //render_func = clw_function(ctx, "ray_marching.cl", "render", local_cl_code);
-   //fixme reset render_func
+
+   render_func = clw_function(ctx, "ray_marching.cl", "render", local_cl_code);
+
    //resources for the sdf caclulation
    calc_sdf();
 }
