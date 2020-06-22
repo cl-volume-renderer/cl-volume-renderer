@@ -122,15 +122,17 @@ class clw_function{
   clw_function& operator=(clw_function&& other){
     assert(this != &other); //Moving object into itself... why?
 
-    if (m_kernel != NULL && m_program != NULL) {                   
-        clw_fail_hard_on_error(clReleaseKernel(m_kernel));         
-        clw_fail_hard_on_error(clReleaseProgram(m_program));       
+    if (m_kernel != NULL && m_program != NULL) {
+        clw_fail_hard_on_error(clReleaseKernel(m_kernel));
+        clw_fail_hard_on_error(clReleaseProgram(m_program));
     }
 
     m_context        = std::move(other.m_context);
     m_kernel         = std::move(other.m_kernel);
+    m_program        = std::move(other.m_program);
     other.m_context  = NULL;
     other.m_kernel   = NULL;
+    other.m_program  = NULL;
 
     m_path           = std::move(other.m_path);
     m_function_name  = std::move(other.m_function_name);

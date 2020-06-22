@@ -140,7 +140,7 @@ struct ImGui_Ui_State{
   std::vector<tf_selection*> selection;
 };
 
-const int tf_size[] = {50, 50};
+const int tf_size[] = {500, 500};
 
 static void
 _create_tf(GLint tftexture, frame_emitter *emitter)
@@ -150,6 +150,17 @@ _create_tf(GLint tftexture, frame_emitter *emitter)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tf_size[0], tf_size[1], 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_mem);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+}
+
+void ui::flush_tf(frame_emitter *emitter, std::vector<tf_selection*> selection) {
+  Histogram_Stats hs = emitter->fetch_histogram_stats();
+  std::string cl_code = "inline bool is_event_gen(short value, short gradient){\n";
+  for(auto selection : selection) {
+    cl_code += selection->create_cl_condition(hs);
+  }
+  cl_code += "  \n  return false;\n}\n";
+  std::cout << cl_code;
+  emitter->next_event_code_set(cl_code);
 }
 
 void ui::run(frame_emitter *emitter) {
@@ -167,8 +178,9 @@ void ui::run(frame_emitter *emitter) {
     volume_block v = loader.load_file(path);
     emitter->image_set(&v);
 
-    imgui_ui_state.selection.push_back(new tf_rect_selection(0, 0.0f, 0.1f, 0.0f, 0.1f));
+    imgui_ui_state.selection.push_back(new tf_rect_selection(0, 0.756f, 1.0f, 0.0f, 1.0f));
     _create_tf(tftexture, emitter);
+    flush_tf(emitter, imgui_ui_state.selection);
 
     while (!done) {
         bool frame_changed;
@@ -219,14 +231,7 @@ void ui::run(frame_emitter *emitter) {
           }
         }
         if (ImGui::Button("Flush Caches & All")) {
-          Histogram_Stats hs = emitter->fetch_histogram_stats();
-          std::string cl_code = "inline bool is_event_gen(short value, short gradient){\n";
-          for(auto selection : imgui_ui_state.selection) {
-            cl_code += selection->create_cl_condition(hs);
-          }
-          cl_code += "  \n  return false;\n}\n";
-          std::cout << cl_code;
-          emitter->next_event_code_set(cl_code);
+          flush_tf(emitter, imgui_ui_state.selection);
         }
         ImGui::End();
 

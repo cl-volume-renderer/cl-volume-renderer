@@ -93,6 +93,8 @@ struct ui_state{
    bool cam_changed;
 };
 
+#include <tf_part.h>
+
 class frame_emitter {
   public:
     clw_context ctx;
@@ -106,11 +108,12 @@ class frame_emitter {
 
 class ui {
   private:
-  SDL_Window *window;
-  SDL_GLContext gl_context;
-  GLuint frametexture;
-  GLuint tftexture;
-  std::string path;
+    SDL_Window *window;
+    SDL_GLContext gl_context;
+    GLuint frametexture;
+    GLuint tftexture;
+    std::string path;
+    void flush_tf(frame_emitter *emitter, std::vector<tf_selection*> selection);
   public:
     ui(const char *path);
     ~ui();
