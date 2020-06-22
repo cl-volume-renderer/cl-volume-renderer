@@ -98,6 +98,7 @@ class frame_emitter {
     clw_context ctx;
     virtual ~frame_emitter() { };
     virtual void image_set(volume_block *b) = 0;
+    virtual void next_event_code_set(const std::string cl_code) = 0;
     virtual void* render_frame(struct ui_state &state, bool &frame_changed) = 0;
     virtual void* render_tf(const unsigned int width, const unsigned int height) = 0;
     virtual Histogram_Stats fetch_histogram_stats() = 0;
