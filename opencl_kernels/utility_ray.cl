@@ -101,7 +101,9 @@ struct ray ray_bounce(struct ray current_ray, float3 normal, int seed){
 
 inline bool exited_volume(__read_only image3d_t reference_volume, float4 position){
   const int3 ref_dimensions = {get_image_width(reference_volume), get_image_height(reference_volume), get_image_depth(reference_volume)};
-  return ref_dimensions.x < position.x | ref_dimensions.y < position.y | ref_dimensions.z < position.z;
+  const bool exited_max = ref_dimensions.x < position.x | ref_dimensions.y < position.y | ref_dimensions.z < position.z;
+  const bool exited_min = position.x < 0 | position.y < 0 | position.z < 0;
+  return exited_max | exited_min; 
 }
 
 enum event{
