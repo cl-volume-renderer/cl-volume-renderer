@@ -9,6 +9,10 @@ sdl = dependency('sdl2')
 
 imgui_proj = subproject('imgui')
 imgui = imgui_proj.get_variable('imgui_dep')
+
+stb_proj = subproject('stb')
+stb = stb_proj.get_variable('stb_dep')
+
 subdir('opencl_wrapper')
 subdir('app')
 
