@@ -6,7 +6,7 @@
 
 std::vector<unsigned char> output = std::vector<unsigned char>(2048*1024*4);
 std::vector<unsigned char> tfoutput = std::vector<unsigned char>(2*2*4);
-std::vector<char> buf_init(8*2);
+std::vector<short> buf_init(8*4);
 std::vector<short> ref_init(8);
 std::vector<short> sdf_init(8);
 
@@ -39,8 +39,8 @@ void renderer::image_set(volume_block *b)
 {
   volume_size = {(unsigned int)b->m_voxel_count_x, (unsigned int)b->m_voxel_count_y, (unsigned int)b->m_voxel_size_z};
   //resources for rendering
-  std::vector<char> buffer(b->m_voxel_count_x * b->m_voxel_count_y * b->m_voxel_count_z*2, 0);
-  buffer_volume = clw_vector<char>(ctx, std::move(buffer));
+  std::vector<short> buffer(b->m_voxel_count_x * b->m_voxel_count_y * b->m_voxel_count_z*4, 0);
+  buffer_volume = clw_vector<short>(ctx, std::move(buffer));
   buffer_volume.push();
   reference_volume = clw_image<const short>(ctx, std::move(b->m_voxels), {b->m_voxel_count_x, b->m_voxel_count_y, b->m_voxel_count_z});
   reference_volume.push();

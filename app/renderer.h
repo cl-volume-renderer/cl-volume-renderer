@@ -12,7 +12,7 @@ class renderer : public frame_emitter {
     clw_image<unsigned char,4> frame; //frame output in 2D
     clw_image<const short> reference_volume; //image data input in 3D
     clw_image<short> sdf;
-    clw_vector<char> buffer_volume; //image data input in 3D
+    clw_vector<short> buffer_volume; //image data input in 3D
     clw_image<unsigned char, 4> tfframe;
     std::array<unsigned int, 3> volume_size;
     Histogram_Stats hs;
