@@ -104,12 +104,11 @@ class clw_function{
   }
 
   ~clw_function(){
-    if (m_kernel != NULL && m_program != NULL) {
-        clw_fail_hard_on_error(clReleaseKernel(m_kernel));
-        clw_fail_hard_on_error(clReleaseProgram(m_program));
-    } else {
-         //This should never happen.
-      std::cerr << "Warning, double free of device mem. object.\n";
+    if (m_kernel != NULL) {
+      clw_fail_hard_on_error(clReleaseKernel(m_kernel));
+    }
+    if(m_program != NULL){
+      clw_fail_hard_on_error(clReleaseProgram(m_program));
     }
   }
 
