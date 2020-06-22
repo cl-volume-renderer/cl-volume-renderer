@@ -59,7 +59,7 @@ std::string tf_rect_selection::create_cl_condition(Histogram_Stats &stats) {
   cl_code << " && gradient < ";
   cl_code << stats.min_g + (max_g)*(stats.max_g - stats.min_g);
   cl_code << ")\n";
-  cl_code << "    return true";
+  cl_code << "    return true;";
   return cl_code.str();
 }
 

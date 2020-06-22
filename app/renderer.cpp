@@ -35,27 +35,18 @@ evenness(const unsigned int g, const unsigned int l)
    return g + l - mod;
 }
 
-void renderer::image_set(volume_block *b)
+void renderer::calc_sdf()
 {
-  volume_size = {(unsigned int)b->m_voxel_count_x, (unsigned int)b->m_voxel_count_y, (unsigned int)b->m_voxel_size_z};
-  //resources for rendering
-  std::vector<char> buffer(b->m_voxel_count_x * b->m_voxel_count_y * b->m_voxel_count_z*2, 0);
-  buffer_volume = clw_vector<char>(ctx, std::move(buffer));
-  buffer_volume.push();
-  reference_volume = clw_image<const short>(ctx, std::move(b->m_voxels), {b->m_voxel_count_x, b->m_voxel_count_y, b->m_voxel_count_z});
-  reference_volume.push();
-
-  //resources for the sdf caclulation
-  std::vector<short> sdf_volume_buffer(b->m_voxel_count_x * b->m_voxel_count_y * b->m_voxel_count_z, 0);
-  sdf = clw_image<short>(ctx, std::move(sdf_volume_buffer), {b->m_voxel_count_x, b->m_voxel_count_y, b->m_voxel_count_z});
+  std::vector<short> sdf_volume_buffer(volume_size[0] * volume_size[1] * volume_size[2], 0);
+  sdf = clw_image<short>(ctx, std::move(sdf_volume_buffer), volume_size);
   sdf.push();
 
-  clw_image<short> sdf_volume_pong = clw_image<short>(ctx, std::move(sdf_volume_buffer), {b->m_voxel_count_x, b->m_voxel_count_y, b->m_voxel_count_z});
+  clw_image<short> sdf_volume_pong = clw_image<short>(ctx, std::move(sdf_volume_buffer), volume_size);
   sdf_volume_pong.push();
 
   //first fill the sdf image with -1 for *inside* a interesting area 1 outside a interesting area
-  auto sdf_generation_init = clw_function(ctx, "signed_distance_field.cl", "create_boolean_image");
-  sdf_generation_init.execute({evenness(b->m_voxel_count_x, 8), evenness(b->m_voxel_count_y,8), evenness(b->m_voxel_count_z, 8)}, {4,4,4}, reference_volume, sdf);
+  auto sdf_generation_init = clw_function(ctx, "signed_distance_field.cl", "create_boolean_image", local_cl_code);
+  sdf_generation_init.execute({evenness(volume_size[0], 8), evenness(volume_size[1],8), evenness(volume_size[2], 8)}, {4,4,4}, reference_volume, sdf);
 
   //now iterate
   std::vector<int> counter(1,0);
@@ -68,9 +59,9 @@ void renderer::image_set(volume_block *b)
     atomic_add_buffer.push();
     //FIXME this is only needed because swap does not like clw_image
     if (i % 2 == 0)
-      sdf_generation_initialization.execute({evenness(b->m_voxel_count_x, 8), evenness(b->m_voxel_count_y,8), evenness(b->m_voxel_count_z, 8)}, {4,4,4}, sdf, sdf_volume_pong, atomic_add_buffer);
+      sdf_generation_initialization.execute({evenness(volume_size[0], 8), evenness(volume_size[1],8), evenness(volume_size[2], 8)}, {4,4,4}, sdf, sdf_volume_pong, atomic_add_buffer);
     else
-      sdf_generation_initialization.execute({evenness(b->m_voxel_count_x, 8), evenness(b->m_voxel_count_y,8), evenness(b->m_voxel_count_z, 8)}, {4,4,4}, sdf_volume_pong, sdf, atomic_add_buffer);
+      sdf_generation_initialization.execute({evenness(volume_size[0], 8), evenness(volume_size[1],8), evenness(volume_size[2], 8)}, {4,4,4}, sdf_volume_pong, sdf, atomic_add_buffer);
     atomic_add_buffer.pull();
     if (atomic_add_buffer[0] == 0 && i % 2 == 1) { //FIXME the later part is only required because sdf is not always filled with the correct values
       break;
@@ -81,6 +72,20 @@ void renderer::image_set(volume_block *b)
   //this here is needed for nvidia to ensure that in another call with sdf as parameter to not contain gargabe
   sdf.pull();
   sdf.push();
+}
+
+void renderer::image_set(volume_block *b)
+{
+  volume_size = {(unsigned int)b->m_voxel_count_x, (unsigned int)b->m_voxel_count_y, (unsigned int)b->m_voxel_count_z};
+  //resources for rendering
+  std::vector<char> buffer(b->m_voxel_count_x * b->m_voxel_count_y * b->m_voxel_count_z*2, 0);
+  buffer_volume = clw_vector<char>(ctx, std::move(buffer));
+  buffer_volume.push();
+  reference_volume = clw_image<const short>(ctx, std::move(b->m_voxels), {b->m_voxel_count_x, b->m_voxel_count_y, b->m_voxel_count_z});
+  reference_volume.push();
+
+  //resources for the sdf caclulation
+  calc_sdf();
 }
 
 Histogram_Stats renderer::fetch_histogram_stats() {
@@ -177,6 +182,15 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
 */
   tfframe.pull();
   return &tfframe[0];
+}
+
+void renderer::next_event_code_set(const std::string cl_code)
+{
+   local_cl_code = cl_code;
+   //render_func = clw_function(ctx, "ray_marching.cl", "render", local_cl_code);
+   //fixme reset render_func
+   //resources for the sdf caclulation
+   calc_sdf();
 }
 
 void* renderer::render_frame(struct ui_state &state, bool &frame_changed)

@@ -140,6 +140,18 @@ struct ImGui_Ui_State{
   std::vector<tf_selection*> selection;
 };
 
+const int tf_size[] = {50, 50};
+
+static void
+_create_tf(GLint tftexture, frame_emitter *emitter)
+{
+    void *texture_mem = emitter->render_tf(tf_size[0], tf_size[1]);
+    glBindTexture(GL_TEXTURE_2D, tftexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tf_size[0], tf_size[1], 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_mem);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+}
+
 void ui::run(frame_emitter *emitter) {
 
     char file_path[1024];
@@ -156,12 +168,7 @@ void ui::run(frame_emitter *emitter) {
     emitter->image_set(&v);
 
     imgui_ui_state.selection.push_back(new tf_rect_selection(0, 0.0f, 0.1f, 0.0f, 0.1f));
-
-    const int tf_size[] = {500, 500};
-    glBindTexture(GL_TEXTURE_2D, tftexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tf_size[0], tf_size[1], 0, GL_RGBA, GL_UNSIGNED_BYTE, emitter->render_tf(tf_size[0], tf_size[1]));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    _create_tf(tftexture, emitter);
 
     while (!done) {
         bool frame_changed;
@@ -213,13 +220,13 @@ void ui::run(frame_emitter *emitter) {
         }
         if (ImGui::Button("Flush Caches & All")) {
           Histogram_Stats hs = emitter->fetch_histogram_stats();
-          std::string cl_code = "inline bool is_event(short value, short gradient){\n";
+          std::string cl_code = "inline bool is_event_gen(short value, short gradient){\n";
           for(auto selection : imgui_ui_state.selection) {
             cl_code += selection->create_cl_condition(hs);
           }
           cl_code += "  \n  return false;\n}\n";
           std::cout << cl_code;
-          //FIXME render the sdf again
+          emitter->next_event_code_set(cl_code);
         }
         ImGui::End();
 
