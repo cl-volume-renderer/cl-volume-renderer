@@ -20,44 +20,6 @@
 
 class clw_function{
   public:
-  [[deprecated]] clw_function(const clw_context& context, const std::vector<std::string>& paths, const std::string& function_name): m_function_name(function_name), m_context(context){
-    std::string full_code = "";
-    for (auto path : paths) {
-      std::ifstream file_stream(KERNEL_DIR + path);
-      if(file_stream.fail()){
-        std::cerr << "Failed to open file: " << path << ".\n";
-        exit(1);
-      }
-      std::string opencl_code((std::istreambuf_iterator<char>(file_stream)), std::istreambuf_iterator<char>());
-      full_code += "\n";
-      full_code += opencl_code;
-    }
-
-    cl_int error;
-    const char* indirection[1]{full_code.data()};
-    m_program = clCreateProgramWithSource(m_context.get_cl_context(), 1, indirection, NULL, &error);
-    clw_fail_hard_on_error(error);
-
-    error = clBuildProgram(m_program, 0, NULL, "-cl-mad-enable -cl-std=CL1.2", NULL, NULL);
-    if(error != CL_SUCCESS){
-      //Failed, print the error log
-      std::cout << "Kernel failed to compile:\n";
-      std::array<char, 4096> buffer;
-      error = clGetProgramBuildInfo(m_program, m_context.get_cl_device_id(), CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer.data(), NULL);
-      std::cout << "---------------------------------------\n";
-      std::cout << "\033[1;33m" << buffer.data() << "\033[0m" << '\n';
-      std::cout << "---------------------------------------\n";
-      clw_fail_hard_on_error(error);
-    }
-    clw_fail_hard_on_error(error);
-
-    cl_build_status build_status;
-    error = clGetProgramBuildInfo(m_program, m_context.get_cl_device_id(), CL_PROGRAM_BUILD_STATUS, sizeof(cl_build_status), &build_status, NULL);
-
-    m_kernel = clCreateKernel(m_program, function_name.data(), NULL);
-    clw_fail_hard_on_error(error);
-  }
-
   const std::string do_include(const std::string& path, std::vector<std::string>& already_included){
     std::filesystem::path path_to_file(path);
     std::filesystem::path directory_of_file = path_to_file.parent_path();
@@ -109,14 +71,16 @@ class clw_function{
     return code_string;
   }
 
-  clw_function(const clw_context& context, const std::string& path, const std::string& function_name): m_function_name(function_name), m_context(context){
+  clw_function(const clw_context& context, const std::string& path, const std::string& function_name, const std::string prepend = ""): m_function_name(function_name), m_path(path), m_prepend(prepend), m_context(&context){
+    //Generate CL code 
     std::vector<std::string> already_included;
     //std::cout << do_include(/*KERNEL_DIR +*/ path, already_included) << '\n';
 		std::string opencl_code = do_include(KERNEL_DIR + path, already_included);
-		
+    opencl_code = prepend + "\n" + opencl_code;
+
     cl_int error;
     const char* indirection[1]{opencl_code.data()};
-    m_program = clCreateProgramWithSource(m_context.get_cl_context(), 1, indirection, NULL, &error);
+    m_program = clCreateProgramWithSource(m_context->get_cl_context(), 1, indirection, NULL, &error);
     clw_fail_hard_on_error(error);
 
     error = clBuildProgram(m_program, 0, NULL, "-cl-mad-enable -cl-std=CL1.2", NULL, NULL);
@@ -124,7 +88,7 @@ class clw_function{
       //Failed, print the error log
       std::cout << "Kernel failed to compile:\n";
       std::array<char, 4096> buffer;
-      error = clGetProgramBuildInfo(m_program, m_context.get_cl_device_id(), CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer.data(), NULL);
+      error = clGetProgramBuildInfo(m_program, m_context->get_cl_device_id(), CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer.data(), NULL);
       std::cout << "---------------------------------------\n";
       std::cout << "\033[1;33m" << buffer.data() << "\033[0m" << '\n';
       std::cout << "---------------------------------------\n";
@@ -133,11 +97,10 @@ class clw_function{
     clw_fail_hard_on_error(error);
 
     cl_build_status build_status;
-    error = clGetProgramBuildInfo(m_program, m_context.get_cl_device_id(), CL_PROGRAM_BUILD_STATUS, sizeof(cl_build_status), &build_status, NULL);
+    error = clGetProgramBuildInfo(m_program, m_context->get_cl_device_id(), CL_PROGRAM_BUILD_STATUS, sizeof(cl_build_status), &build_status, NULL);
 
     m_kernel = clCreateKernel(m_program, function_name.data(), NULL);
     clw_fail_hard_on_error(error); 
-
   }
 
   ~clw_function(){
@@ -152,8 +115,28 @@ class clw_function{
 
   clw_function(const clw_function&) = delete;
   clw_function(clw_function&&) = delete;
-  clw_function& operator=(const clw_function&) = delete;
-  clw_function& operator=(clw_function&&) = delete;
+  //Returning new object to prevent device side memory problems
+  [[deprecated("Warning, consider using the move assignment instead; it is much faster.")]] clw_function operator=(const clw_function& other){
+    return clw_function(*other.m_context,other.m_path,other.m_function_name,other.m_prepend); 
+  }
+  clw_function& operator=(clw_function&& other){
+    assert(this != &other); //Moving object into itself... why?
+
+    if (m_kernel != NULL && m_program != NULL) {                   
+        clw_fail_hard_on_error(clReleaseKernel(m_kernel));         
+        clw_fail_hard_on_error(clReleaseProgram(m_program));       
+    }
+
+    m_context        = std::move(other.m_context);
+    m_kernel         = std::move(other.m_kernel);
+    other.m_context  = NULL;
+    other.m_kernel   = NULL;
+
+    m_path           = std::move(other.m_path);
+    m_function_name  = std::move(other.m_function_name);
+    m_prepend        = std::move(other.m_prepend);
+    return *this;
+  };
 
 
 
@@ -194,7 +177,7 @@ class clw_function{
 
     constexpr const std::array<size_t, 3> global_size{GX, GY, GZ};
     constexpr const std::array<size_t, 3> local_size{LX, LY, LZ};
-    error = clEnqueueNDRangeKernel(m_context.get_cl_command_queue(), m_kernel, global_size.size(), NULL, global_size.data(), local_size.data(), 0, NULL, NULL);
+    error = clEnqueueNDRangeKernel(m_context->get_cl_command_queue(), m_kernel, global_size.size(), NULL, global_size.data(), local_size.data(), 0, NULL, NULL);
 
     //clFinish(m_context.get_cl_command_queue());
     clw_fail_hard_on_error(error);
@@ -247,7 +230,7 @@ class clw_function{
 
     recurse_helper<0>(arg...);
     cl_int error{0};
-    error = clEnqueueNDRangeKernel(m_context.get_cl_command_queue(), m_kernel, global_size.size(), NULL, global_size.data(), local_size.data(), 0, NULL, NULL);
+    error = clEnqueueNDRangeKernel(m_context->get_cl_command_queue(), m_kernel, global_size.size(), NULL, global_size.data(), local_size.data(), 0, NULL, NULL);
     //clFinish(m_context.get_cl_command_queue());
     clw_fail_hard_on_error(error);
   }
@@ -255,6 +238,9 @@ class clw_function{
 private:
   cl_program m_program;
   cl_kernel m_kernel;
-  const std::string m_function_name;
-  const clw_context& m_context;
+
+  std::string m_function_name;
+  std::string m_path;
+  std::string m_prepend;
+  const clw_context* m_context;
 };
