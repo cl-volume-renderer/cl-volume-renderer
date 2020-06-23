@@ -11,14 +11,16 @@
 #include <imgui_impl_opengl2.cpp>
 #include <imgui_impl_sdl.cpp>
 #include "nrrd_loader.h"
+#include "hdre_loader.h"
 #include "clw_context.h"
 
 static const GLubyte emptyData[] = {0, 0, 0, 250};
 
-ui::ui(const char *raw_path, clw_context &c) : ctx(c) {
+ui::ui(const char *raw_path, const char *env_map, clw_context &c) : ctx(c) {
   GLuint texture[1];
 
-  path = std::string(raw_path);
+  nrrd_path = std::string(raw_path);
+  env_map_path = std::string(env_map);
 
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s", SDL_GetError());
@@ -169,15 +171,20 @@ void ui::run(frame_emitter *emitter) {
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     bool done = false;
     ImGuiIO& io = ImGui::GetIO();
-    struct ui_state state = {path, true, 0, 0, {-200,200,-200}, {0, 0}, true};
+    struct ui_state state = {nrrd_path, true, 0, 0, {-200,200,-200}, {0, 0}, true};
     ImGui_Ui_State imgui_ui_state;
 
     SDL_GetWindowSize(window, &state.width, &state.height); //We have a fixed window, so that is enough
-    snprintf(file_path, 1024, "%s", path.c_str());
-    nrrd_loader loader;
-    volume_block v = loader.load_file(path);
+    snprintf(file_path, 1024, "%s", nrrd_path.c_str());
+
+    nrrd_loader vloader;
+    volume_block v = vloader.load_file(nrrd_path);
     reference_volume rv(ctx, &v);
-    emitter->image_set(&rv);
+
+    hdre_loader iloader;
+    image em = iloader.load_file(env_map_path);
+    env_map emap(ctx, em);
+    emitter->image_set(&rv, &emap);
 
     imgui_ui_state.selection.push_back(new tf_rect_selection(0, 0.756f, 1.0f, 0.0f, 1.0f));
     _create_tf(tftexture, emitter);
@@ -236,9 +243,9 @@ void ui::run(frame_emitter *emitter) {
         }
         ImGui::End();
 
-        if (!!strcmp(file_path, path.c_str()))
+        if (!!strcmp(file_path, nrrd_path.c_str()))
           {
-             path = std::string(file_path);
+             nrrd_path = std::string(file_path);
              state.path_changed = true;
           }
 

@@ -27,7 +27,7 @@ renderer::~renderer()
 
 }
 
-void renderer::image_set(const reference_volume *rv)
+void renderer::image_set(const reference_volume *rv, const env_map *map)
 {
   volume = rv;
   //resources for rendering
@@ -37,6 +37,7 @@ void renderer::image_set(const reference_volume *rv)
 
   //resources for the sdf caclulation
   sdf = signed_distance_field(ctx, *volume, local_cl_code);
+  emap = map;
 }
 
 void* renderer::render_tf(const unsigned int height, const unsigned int width)
