@@ -1,3 +1,4 @@
+#define STB_IMAGE_IMPLEMENTATION
 #include "hdre_loader.h"
 #include <stb_image.h>
 #include <vector>
