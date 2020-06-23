@@ -3,9 +3,10 @@
 #clw_include_once "utility_ray.cl"
 #clw_include_once "utility_sampling.cl"
 #clw_include_once "utility_filter.cl"
+#clw_include_once "utility_environment_map.cl"
 
 
-uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volume, __read_only image3d_t sdf, __global short* buffer_volume, int random_seed){
+uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volume, __read_only image3d_t sdf, __read_only image2d_t environment_map, __global short* buffer_volume, int random_seed){
   const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
   const int3 reference_dimensions = {get_image_width(reference_volume), get_image_height(reference_volume), get_image_depth(reference_volume)};
 
@@ -40,17 +41,23 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
 
       current_ray = march_to_next_event(current_ray, reference_volume,sdf, &ray_event);
       if(ray_event == Exit_volume){
+        /*
+        uint4 light_map = sample_environment_map(current_ray, environment_map);
+        buffer_value.x += (light_map.z + light_map.x + light_map.y)/3;
+        buffer_value.y += (light_map.z + light_map.x + light_map.y)/3;
+        buffer_value.z += (light_map.z + light_map.x + light_map.y)/3;
+        */
         float  sun_distance = 2;
-        float3 sun_dir = {0.0f, -1.0f, 0.0f};
+        float3 sun_dir = {0.0f, 0.8f, 1.0f};
         float4 sun = {1.0f,0.95f,0.8f,0.0f};
         
-        float key_distance = 6;
-        float3 key_dir = {1.0f, 0.0f, 0};
-        float4 key = {1.f, 1.f, 1.f, 0.0f};
+        float key_distance = 4;
+        float3 key_dir = {0.0f, -1.0f, 0};
+        float4 key = {0.6f, 0.6f, 0.6f, 0.0f};
 
         float sec_distance = 1;
-        float3 sec_dir = {0.707f, 0.0f, 0.707f};
-        float4 sec = {0.05f, 0.05f, 0.3f, 0.0f};
+        float3 sec_dir = {0.0f, 1.0, 0};
+        float4 sec = {0.1f, 0.1f, 0.4f, 0.0f};
 
         float sun_cont = pow(clamp(dot(current_ray.direction, normalize(sun_dir)), 0.f, 1.f), sun_distance) * 127;
         float key_cont = pow(clamp(dot(current_ray.direction, normalize(key_dir)), 0.f, 1.f), key_distance) * 127;
@@ -72,7 +79,7 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
   buffer_value = buffer_volume_read4f(reference_dimensions, buffer_volume, make_float4(hit_information.origin,0));
   //buffer_value /= buffer_value.w;
   buffer_value /= buffer_value.w;
-  uint4 return_int = {buffer_value.x,buffer_value.y,buffer_value.z,0};
+  uint4 return_int = {buffer_value.x,buffer_value.y,buffer_value.z,1};
   //uint4 return_int = {current_ray.direction.x*128,current_ray.direction.y*128,current_ray.direction.z*128,0};
 
     
@@ -174,7 +181,7 @@ uint4 compute_debug_normal(struct ray surface_ray, __read_only image3d_t referen
 
 }
 
-__kernel void render(__write_only image2d_t frame, __read_only image3d_t reference_volume, __read_only image3d_t sdf, __global short* buffer_volume, float cam_pos_x, float cam_pos_y, float cam_pos_z, float cam_dir_x, float cam_dir_y, float cam_dir_z, int random_seed){
+__kernel void render(__write_only image2d_t frame, __read_only image3d_t reference_volume, __read_only image3d_t sdf, __read_only image2d_t environment_map, __global short* buffer_volume, float cam_pos_x, float cam_pos_y, float cam_pos_z, float cam_dir_x, float cam_dir_y, float cam_dir_z, int random_seed){
   unsigned int x = get_global_id(0);
   unsigned int y = get_global_id(1);
   int2 pos = {x, y};
@@ -194,7 +201,13 @@ __kernel void render(__write_only image2d_t frame, __read_only image3d_t referen
     cut_result = res;
   }
 
-  if(!cut_result.cut) return;
+  if(!cut_result.cut) {
+    struct ray vrayr = generate_ray(camera, x,y,get_image_width(frame), get_image_height(frame));
+    uint4 eval = sample_environment_map(vrayr, environment_map);
+    uint4 color = (uint4){eval.x, eval.y, eval.z, 200};
+    write_imageui(frame, pos, color);
+    return;
+  }
 
   struct ray surface_ray = {cut_result.cut_point, vray.direction};
 
@@ -202,8 +215,16 @@ __kernel void render(__write_only image2d_t frame, __read_only image3d_t referen
   color /= 16;
 
   //uint4 f = compute_debug_normal(surface_ray, reference_volume, sdf, buffer_volume, random_seed);
-  uint4 f = compute_light(surface_ray, reference_volume, sdf, buffer_volume, random_seed);
+  uint4 f = compute_light(surface_ray, reference_volume, sdf,environment_map, buffer_volume, random_seed);
   color = f;
+  if(f.w == 0){
+    struct ray vrayr = generate_ray(camera, x,y,get_image_width(frame), get_image_height(frame));
+    uint4 eval = sample_environment_map(vrayr, environment_map);
+    uint4 color = (uint4){eval.x, eval.y, eval.z, 200};
+    write_imageui(frame, pos, color);
+    return;
+
+  }
 
   //if(color.x + color.y + color.z < 255*3)
   write_imageui(frame, pos, color);

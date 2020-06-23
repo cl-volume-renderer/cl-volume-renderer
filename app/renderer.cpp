@@ -155,7 +155,7 @@ void* renderer::render_frame(struct ui_state &state, bool &frame_changed)
 
   TIME_START();
   render_func.execute({(unsigned long)state.width, (unsigned long)state.height}, {8, 8}, frame,
-    volume->get_reference_volume(), sdf.get_sdf_buffer(), buffer_volume,
+    volume->get_reference_volume(), sdf.get_sdf_buffer(), emap->get_buffer(), buffer_volume,
     state.position.val[0], state.position.val[1], state.position.val[2],
     vec.val[0], vec.val[1], vec.val[2], random_seed);
 
