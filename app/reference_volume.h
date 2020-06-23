@@ -59,29 +59,29 @@ class reference_volume {
       gradient_range[1] = stats[3];
     }
 
-    std::array<int, 2> get_value_range() {
+    std::array<int, 2> get_value_range() const {
       return value_range;
     }
 
-    std::array<int, 2> get_gradient_range() {
+    std::array<int, 2> get_gradient_range() const {
       return gradient_range;
     }
 
-    std::array<size_t, 3> get_volume_size() {
+    std::array<size_t, 3> get_volume_size() const {
       return volume_size;
     }
 
-    std::array<size_t, 3> get_volume_size_evenness(unsigned int l) {
+    std::array<size_t, 3> get_volume_size_evenness(unsigned int l) const{
       return {evenness(volume_size[0], l), evenness(volume_size[1], l), evenness(volume_size[2], l)};
     }
 
-    size_t get_volume_length() {
+    size_t get_volume_length() const {
       return volume_size[0] * volume_size[1] * volume_size[2];
     }
-    clw_image<const short>& get_reference_volume() {
+    const clw_image<const short>& get_reference_volume() const {
       return volume;
     }
-    Volume_Stats get_volume_stats() {
+    Volume_Stats get_volume_stats()  const {
       return Volume_Stats(value_range, gradient_range);
     }
 };

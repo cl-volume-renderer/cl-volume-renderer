@@ -13,11 +13,11 @@ volume_block b({0}, 0, 0, 0, 0, 0, 0);
 
 renderer::renderer(clw_context &c)
 : ctx(c),
-  render_func(ctx, "ray_marching.cl", "render"),
+  render_func(ctx, "ray_marching.cl", "render", " is_event"),
   frame(ctx, std::move(output), {2048, 1024,1}),
-  sdf(ctx, std::move(sdf_init), {2, 2, 2}),
   buffer_volume(ctx, std::move(buf_init)),
-  tfframe(ctx, std::move(tfoutput), {2, 2})
+  tfframe(ctx, std::move(tfoutput), {2, 2}),
+  sdf(ctx)
 {
 
 }
@@ -27,46 +27,7 @@ renderer::~renderer()
 
 }
 
-void renderer::calc_sdf()
-{
-  std::vector<short> sdf_volume_buffer(volume->get_volume_length(), 0);
-  sdf = clw_image<short>(ctx, std::move(sdf_volume_buffer), volume->get_volume_size());
-  sdf.push();
-
-  clw_image<short> sdf_volume_pong = clw_image<short>(ctx, std::move(sdf_volume_buffer), volume->get_volume_size());
-  sdf_volume_pong.push();
-
-  //first fill the sdf image with -1 for *inside* a interesting area 1 outside a interesting area
-  auto sdf_generation_init = clw_function(ctx, "signed_distance_field.cl", "create_boolean_image", local_cl_code);
-  sdf_generation_init.execute(volume->get_volume_size_evenness(8), {4,4,4}, volume->get_reference_volume(), sdf);
-
-  //now iterate
-  std::vector<int> counter(1,0);
-  clw_vector<int> atomic_add_buffer(ctx, std::move(counter));
-  auto sdf_generation_initialization = clw_function(ctx, "signed_distance_field.cl", "create_signed_distance_field");
-  printf("Starting to build SDF\n");
-  clock_t start = clock();
-  for (int i = 0; i < 1000; ++i) {
-    atomic_add_buffer[0] = 0;
-    atomic_add_buffer.push();
-    //FIXME this is only needed because swap does not like clw_image
-    if (i % 2 == 0)
-      sdf_generation_initialization.execute(volume->get_volume_size_evenness(8), {4,4,4}, sdf, sdf_volume_pong, atomic_add_buffer);
-    else
-      sdf_generation_initialization.execute(volume->get_volume_size_evenness(8), {4,4,4}, sdf_volume_pong, sdf, atomic_add_buffer);
-    atomic_add_buffer.pull();
-    if (atomic_add_buffer[0] == 0 && i % 2 == 1) { //FIXME the later part is only required because sdf is not always filled with the correct values
-      break;
-    }
-  }
-  printf("Finished building SDF (%f)\n", (float)(clock() - start) / CLOCKS_PER_SEC);
-
-  //this here is needed for nvidia to ensure that in another call with sdf as parameter to not contain gargabe
-  sdf.pull();
-  sdf.push();
-}
-
-void renderer::image_set(reference_volume *rv)
+void renderer::image_set(const reference_volume *rv)
 {
   volume = rv;
   //resources for rendering
@@ -75,7 +36,7 @@ void renderer::image_set(reference_volume *rv)
   buffer_volume.push();
 
   //resources for the sdf caclulation
-  calc_sdf();
+  sdf = signed_distance_field(ctx, *volume, local_cl_code);
 }
 
 void* renderer::render_tf(const unsigned int height, const unsigned int width)
@@ -175,8 +136,7 @@ void renderer::next_event_code_set(const std::string cl_code)
 
    render_func = clw_function(ctx, "ray_marching.cl", "render", local_cl_code);
 
-   //resources for the sdf caclulation
-   calc_sdf();
+   sdf = signed_distance_field(ctx, *volume, local_cl_code);
 }
 
 void* renderer::render_frame(struct ui_state &state, bool &frame_changed)
@@ -194,7 +154,7 @@ void* renderer::render_frame(struct ui_state &state, bool &frame_changed)
 
   TIME_START();
   render_func.execute({(unsigned long)state.width, (unsigned long)state.height}, {8, 8}, frame,
-    volume->get_reference_volume(), sdf, buffer_volume,
+    volume->get_reference_volume(), sdf.get_sdf_buffer(), buffer_volume,
     state.position.val[0], state.position.val[1], state.position.val[2],
     vec.val[0], vec.val[1], vec.val[2], random_seed);
 

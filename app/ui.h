@@ -28,7 +28,7 @@ struct ui_state{
 class frame_emitter {
   public:
     virtual ~frame_emitter() { };
-    virtual void image_set(reference_volume *volume) = 0;
+    virtual void image_set(const reference_volume *volume) = 0;
     virtual void next_event_code_set(const std::string cl_code) = 0;
     virtual void* render_frame(struct ui_state &state, bool &frame_changed) = 0;
     virtual void* render_tf(const unsigned int width, const unsigned int height) = 0;
