@@ -9,11 +9,12 @@ std::vector<unsigned char> tfoutput = std::vector<unsigned char>(2*2*4);
 std::vector<short> buf_init(8*4);
 std::vector<short> ref_init(8);
 std::vector<short> sdf_init(8);
+volume_block b({0}, 0, 0, 0, 0, 0, 0);
 
-renderer::renderer()
-: render_func(ctx, "ray_marching.cl", "render"),
+renderer::renderer(clw_context &c)
+: ctx(c),
+  render_func(ctx, "ray_marching.cl", "render"),
   frame(ctx, std::move(output), {2048, 1024,1}),
-  reference_volume(ctx, std::move(ref_init), {2,2,2}),
   sdf(ctx, std::move(sdf_init), {2, 2, 2}),
   buffer_volume(ctx, std::move(buf_init)),
   tfframe(ctx, std::move(tfoutput), {2, 2})
@@ -26,27 +27,18 @@ renderer::~renderer()
 
 }
 
-static unsigned long
-evenness(const unsigned int g, const unsigned int l)
-{
-   unsigned int mod = g % l;
-   if (g % l == 0) return g;
-
-   return g + l - mod;
-}
-
 void renderer::calc_sdf()
 {
-  std::vector<short> sdf_volume_buffer(volume_size[0] * volume_size[1] * volume_size[2], 0);
-  sdf = clw_image<short>(ctx, std::move(sdf_volume_buffer), volume_size);
+  std::vector<short> sdf_volume_buffer(volume->get_volume_length(), 0);
+  sdf = clw_image<short>(ctx, std::move(sdf_volume_buffer), volume->get_volume_size());
   sdf.push();
 
-  clw_image<short> sdf_volume_pong = clw_image<short>(ctx, std::move(sdf_volume_buffer), volume_size);
+  clw_image<short> sdf_volume_pong = clw_image<short>(ctx, std::move(sdf_volume_buffer), volume->get_volume_size());
   sdf_volume_pong.push();
 
   //first fill the sdf image with -1 for *inside* a interesting area 1 outside a interesting area
   auto sdf_generation_init = clw_function(ctx, "signed_distance_field.cl", "create_boolean_image", local_cl_code);
-  sdf_generation_init.execute({evenness(volume_size[0], 8), evenness(volume_size[1],8), evenness(volume_size[2], 8)}, {4,4,4}, reference_volume, sdf);
+  sdf_generation_init.execute(volume->get_volume_size_evenness(8), {4,4,4}, volume->get_reference_volume(), sdf);
 
   //now iterate
   std::vector<int> counter(1,0);
@@ -59,9 +51,9 @@ void renderer::calc_sdf()
     atomic_add_buffer.push();
     //FIXME this is only needed because swap does not like clw_image
     if (i % 2 == 0)
-      sdf_generation_initialization.execute({evenness(volume_size[0], 8), evenness(volume_size[1],8), evenness(volume_size[2], 8)}, {4,4,4}, sdf, sdf_volume_pong, atomic_add_buffer);
+      sdf_generation_initialization.execute(volume->get_volume_size_evenness(8), {4,4,4}, sdf, sdf_volume_pong, atomic_add_buffer);
     else
-      sdf_generation_initialization.execute({evenness(volume_size[0], 8), evenness(volume_size[1],8), evenness(volume_size[2], 8)}, {4,4,4}, sdf_volume_pong, sdf, atomic_add_buffer);
+      sdf_generation_initialization.execute(volume->get_volume_size_evenness(8), {4,4,4}, sdf_volume_pong, sdf, atomic_add_buffer);
     atomic_add_buffer.pull();
     if (atomic_add_buffer[0] == 0 && i % 2 == 1) { //FIXME the later part is only required because sdf is not always filled with the correct values
       break;
@@ -74,22 +66,16 @@ void renderer::calc_sdf()
   sdf.push();
 }
 
-void renderer::image_set(volume_block *b)
+void renderer::image_set(reference_volume *rv)
 {
-  volume_size = {(unsigned int)b->m_voxel_count_x, (unsigned int)b->m_voxel_count_y, (unsigned int)b->m_voxel_count_z};
+  volume = rv;
   //resources for rendering
-  std::vector<short> buffer(b->m_voxel_count_x * b->m_voxel_count_y * b->m_voxel_count_z*4, 0);
+  std::vector<short> buffer(volume->get_volume_length()*4, 0);
   buffer_volume = clw_vector<short>(ctx, std::move(buffer));
   buffer_volume.push();
-  reference_volume = clw_image<const short>(ctx, std::move(b->m_voxels), {b->m_voxel_count_x, b->m_voxel_count_y, b->m_voxel_count_z});
-  reference_volume.push();
 
   //resources for the sdf caclulation
   calc_sdf();
-}
-
-Histogram_Stats renderer::fetch_histogram_stats() {
-  return hs;
 }
 
 void* renderer::render_tf(const unsigned int height, const unsigned int width)
@@ -111,8 +97,8 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
 
   auto tf_min_max_construction = clw_function(ctx, "transpherefunction.cl", "tf_fetch_min_max");
   tf_min_max_construction.execute(
-    {evenness(volume_size[0], 8), evenness(volume_size[1], 8), evenness(volume_size[2], 8)},
-    {4,4,4}, reference_volume,
+    volume->get_volume_size_evenness(8),
+    {4,4,4}, volume->get_reference_volume(),
     stats);
 
   //then we are counting
@@ -122,8 +108,8 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
 
   auto tf_frame_construction = clw_function(ctx, "transpherefunction.cl", "tf_sort_values");
   tf_frame_construction.execute(
-    {evenness(volume_size[0], 8), evenness(volume_size[1], 8), evenness(volume_size[2], 8)},
-    {4,4,4}, reference_volume, frame, width, height,
+    volume->get_volume_size_evenness(8),
+    {4,4,4}, volume->get_reference_volume(), frame, width, height,
     stats);
   //build a map from the value to the position of ranking all values in the frame
   frame.pull();
@@ -156,7 +142,6 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
     {16,16}, tfframe, frame, history, (int)history.size(), stats);
 
   stats.pull();
-  hs = Histogram_Stats(stats);
 
   /*
   frame.pull();
@@ -168,11 +153,11 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
     }
     printf("\n");
   }
-
+*/
   for (int i = 0; i < 5; ++i) {
     printf("%d\n", stats[i]);
   }
-
+/*
   for (int x = 0; x < 50; ++x) {
     for (int y = 0; y < 50; ++y) {
       printf("%d, ", tfframe[(y*50+x)*4]);
@@ -209,7 +194,7 @@ void* renderer::render_frame(struct ui_state &state, bool &frame_changed)
 
   TIME_START();
   render_func.execute({(unsigned long)state.width, (unsigned long)state.height}, {8, 8}, frame,
-    reference_volume, sdf, buffer_volume,
+    volume->get_reference_volume(), sdf, buffer_volume,
     state.position.val[0], state.position.val[1], state.position.val[2],
     vec.val[0], vec.val[1], vec.val[2], random_seed);
 
