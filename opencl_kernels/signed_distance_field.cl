@@ -1,3 +1,5 @@
+#clw_include_once "utility.cl"
+#clw_include_once "utility_ray.cl"
 
 __kernel void create_boolean_image(__read_only image3d_t reference_volume, __write_only image3d_t sdf_image){
    const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
@@ -12,7 +14,7 @@ __kernel void create_boolean_image(__read_only image3d_t reference_volume, __wri
 
    //FIXME this is not really great right now how it is.
    //FIXME we should somehow abstract out this value.x > X thing
-   if (value.x > 800) {
+   if (is_event(value.x)) {
      result.x = -1;
    }else {
      result.x = 1;

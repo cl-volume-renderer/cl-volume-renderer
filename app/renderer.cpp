@@ -36,7 +36,7 @@ void renderer::image_set(const reference_volume *rv, const env_map *map)
   buffer_volume.push();
 
   //resources for the sdf caclulation
-  sdf = signed_distance_field(ctx, *volume, local_cl_code);
+  sdf = signed_distance_field(ctx, *volume, local_cl_code != "" ? local_cl_code : "inline bool is_event_gen(short value, short gradient){\n return false;\n}\n");
   emap = map;
 }
 

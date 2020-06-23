@@ -11,7 +11,7 @@ signed_distance_field::signed_distance_field(clw_context &c, const reference_vol
   //now iterate
 
   clw_vector<int> atomic_add_buffer(c, std::vector<int>(1,0));
-  auto sdf_generation_initialization = clw_function(c, "signed_distance_field.cl", "create_signed_distance_field");
+  auto sdf_generation_initialization = clw_function(c, "signed_distance_field.cl", "create_signed_distance_field", local_cl_code);
   printf("Starting to build SDF\n");
   clock_t start = clock();
   for (int i = 0; i < 1000; ++i) {
