@@ -9,7 +9,7 @@ image hdre_loader::load_file(std::string path) {
   stbi_info(path.data(), &width, &height, &n);
 
   stbi_hdr_to_ldr_gamma(2.2f); 
-  stbi_hdr_to_ldr_scale(20.0f);
+  stbi_hdr_to_ldr_scale(10.0f);
   unsigned char *data = stbi_load(path.data(), &width, &height, &n, 4);
   n = 4; //Problem with stb?
   if(data == NULL){

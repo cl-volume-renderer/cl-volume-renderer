@@ -41,34 +41,11 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
 
       current_ray = march_to_next_event(current_ray, reference_volume,sdf, &ray_event);
       if(ray_event == Exit_volume){
-        /*
         uint4 light_map = sample_environment_map(current_ray, environment_map);
-        buffer_value.x += (light_map.z + light_map.x + light_map.y)/3;
-        buffer_value.y += (light_map.z + light_map.x + light_map.y)/3;
-        buffer_value.z += (light_map.z + light_map.x + light_map.y)/3;
-        */
-        float  sun_distance = 2;
-        float3 sun_dir = {0.0f, 0.8f, 1.0f};
-        float4 sun = {1.0f,0.95f,0.8f,0.0f};
+        buffer_value.x += light_map.x;
+        buffer_value.y += light_map.y;
+        buffer_value.z += light_map.z;
         
-        float key_distance = 4;
-        float3 key_dir = {0.0f, -1.0f, 0};
-        float4 key = {0.6f, 0.6f, 0.6f, 0.0f};
-
-        float sec_distance = 1;
-        float3 sec_dir = {0.0f, 1.0, 0};
-        float4 sec = {0.1f, 0.1f, 0.4f, 0.0f};
-
-        float sun_cont = pow(clamp(dot(current_ray.direction, normalize(sun_dir)), 0.f, 1.f), sun_distance) * 127;
-        float key_cont = pow(clamp(dot(current_ray.direction, normalize(key_dir)), 0.f, 1.f), key_distance) * 127;
-        float sec_cont = pow(clamp(dot(current_ray.direction, normalize(sec_dir)), 0.f, 1.f), sec_distance) * 127;
-
-        float4 si = sun_cont * sun;
-        float4 ki = key_cont * key;
-        float4 sei = sec_cont * sec;
-        buffer_value.x += si.x + ki.x + sei.x;
-        buffer_value.y += si.y + ki.y + sei.y;
-        buffer_value.z += si.z + ki.z + sei.z;
       }
       buffer_volume_write4f(reference_dimensions, buffer_volume, make_float4(hit_information.origin, 0), buffer_value);
     }
