@@ -45,7 +45,7 @@ void tf_rect_selection::render_ui(ImVec2 position, ImVec2 size) {
    dlist->AddRectFilled(position, rsize, ImColor(color[0], color[1], color[2], 0.2f));
 }
 
-std::string tf_rect_selection::create_cl_condition(Histogram_Stats &stats) {
+std::string tf_rect_selection::create_cl_condition(Volume_Stats stats) {
   /*
    * {min,max}{_v, _g} are between 0.0 and 1.0
    */
@@ -87,6 +87,6 @@ void tf_circle_segment_selection::render_ui(ImVec2 position, ImVec2 size) {
   //FIXME Implement
 }
 
-std::string tf_circle_segment_selection::create_cl_condition(Histogram_Stats &stats) {
+std::string tf_circle_segment_selection::create_cl_condition(Volume_Stats stats) {
    return "";
 }

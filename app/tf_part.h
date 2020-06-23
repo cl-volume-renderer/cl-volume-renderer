@@ -5,12 +5,13 @@
 #include <string>
 #include <imgui_impl_sdl.h>
 #include <imgui_impl_opengl2.h>
+#include "reference_volume.h"
 
 class tf_selection {
   public:
     virtual ~tf_selection() { };
     virtual void render_ui(ImVec2 position, ImVec2 size) = 0;
-    virtual std::string create_cl_condition(Histogram_Stats &stats) = 0;
+    virtual std::string create_cl_condition(Volume_Stats stats) = 0;
 };
 
 class tf_rect_selection : public tf_selection {
@@ -22,7 +23,7 @@ class tf_rect_selection : public tf_selection {
     tf_rect_selection(unsigned int id, float min_v, float max_v, float min_g, float max_g);
     virtual ~tf_rect_selection() { };
     void render_ui(ImVec2 position, ImVec2 size) override;
-    std::string create_cl_condition(Histogram_Stats &stats) override;
+    std::string create_cl_condition(Volume_Stats stats) override;
 };
 
 class tf_circle_segment_selection : public tf_selection {
@@ -36,7 +37,7 @@ class tf_circle_segment_selection : public tf_selection {
     tf_circle_segment_selection(unsigned int id, float point_v, float point_g, float radius, float degree);
     virtual ~tf_circle_segment_selection() { };
     void render_ui(ImVec2 position, ImVec2 size) override;
-    std::string create_cl_condition(Histogram_Stats &stats) override;
+    std::string create_cl_condition(Volume_Stats stats) override;
 };
 
 

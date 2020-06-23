@@ -11,10 +11,11 @@
 #include <imgui_impl_opengl2.cpp>
 #include <imgui_impl_sdl.cpp>
 #include "nrrd_loader.h"
+#include "clw_context.h"
 
 static const GLubyte emptyData[] = {0, 0, 0, 250};
 
-ui::ui(const char *raw_path) {
+ui::ui(const char *raw_path, clw_context &c) : ctx(c) {
   GLuint texture[1];
 
   path = std::string(raw_path);
@@ -152,11 +153,10 @@ _create_tf(GLint tftexture, frame_emitter *emitter)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 }
 
-void ui::flush_tf(frame_emitter *emitter, std::vector<tf_selection*> selection) {
-  Histogram_Stats hs = emitter->fetch_histogram_stats();
+void ui::flush_tf(frame_emitter *emitter, Volume_Stats stats, std::vector<tf_selection*> selection) {
   std::string cl_code = "inline bool is_event_gen(short value, short gradient){\n";
   for(auto selection : selection) {
-    cl_code += selection->create_cl_condition(hs);
+    cl_code += selection->create_cl_condition(stats);
   }
   cl_code += "  \n  return false;\n}\n";
   std::cout << cl_code;
@@ -176,11 +176,12 @@ void ui::run(frame_emitter *emitter) {
     snprintf(file_path, 1024, "%s", path.c_str());
     nrrd_loader loader;
     volume_block v = loader.load_file(path);
-    emitter->image_set(&v);
+    reference_volume rv(ctx, &v);
+    emitter->image_set(&rv);
 
     imgui_ui_state.selection.push_back(new tf_rect_selection(0, 0.756f, 1.0f, 0.0f, 1.0f));
     _create_tf(tftexture, emitter);
-    flush_tf(emitter, imgui_ui_state.selection);
+    flush_tf(emitter, rv.get_volume_stats(), imgui_ui_state.selection);
 
     while (!done) {
         bool frame_changed;
@@ -231,7 +232,7 @@ void ui::run(frame_emitter *emitter) {
           }
         }
         if (ImGui::Button("Flush Caches & All")) {
-          flush_tf(emitter, imgui_ui_state.selection);
+          flush_tf(emitter, rv.get_volume_stats(), imgui_ui_state.selection);
         }
         ImGui::End();
 

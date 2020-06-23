@@ -7,78 +7,8 @@
 #include "volume_block.h"
 #include <clw_image.h>
 #include <clw_context.h>
-
-struct Histogram_Stats{
-  float min_v;
-  float max_v;
-  float min_g;
-  float max_g;
-  template <typename T>
-  Histogram_Stats(const T& stats) {
-    assert(stats.size() >= 4);
-    min_v = stats[0];
-    max_v = stats[1];
-    min_g = stats[2];
-    max_g = stats[3];
-  }
-  Histogram_Stats() {
-    min_v = max_v = min_g = max_g = 0;
-  }
-};
-
-struct Position3D {
-   float val[3];
-   Position3D(double alpha, double beta, double gamma, Position3D base) {
-     val[0] = (cos(alpha)*cos(beta))*base.val[0] + (cos(alpha)*sin(beta)-sin(alpha)*cos(gamma))*base.val[1] + (cos(alpha)*sin(beta)*cos(gamma)+sin(alpha)*sin(gamma))*base.val[2];
-     val[1] = (-sin(beta))*base.val[0] + (cos(beta)*sin(gamma))*base.val[1] + (cos(beta)*cos(gamma))*base.val[2];
-     val[2] = (sin(alpha)*cos(beta))*base.val[0] + (sin(alpha)*sin(beta)*sin(gamma)+cos(alpha)*cos(gamma))*base.val[1] + (sin(alpha)*sin(beta)*cos(gamma)-cos(alpha)*sin(gamma))*base.val[2];
-     (*this).normalize();
-   }
-   Position3D(double x, double y, double z) {
-     val[0] = x;
-     val[1] = y;
-     val[2] = z;
-   }
-   Position3D operator+(Position3D other) {
-    Position3D ret = {
-      val[0] + other.val[0],
-      val[1] + other.val[1],
-      val[2] + other.val[2]
-    };
-    return ret;
-   }
-   Position3D operator-(Position3D other) {
-    Position3D ret = {
-      val[0] - other.val[0],
-      val[1] - other.val[1],
-      val[2] - other.val[2]
-    };
-    return ret;
-   }
-   Position3D operator*(float other) {
-    Position3D ret = {
-      val[0] * other,
-      val[1] * other,
-      val[2] * other
-    };
-    return ret;
-   }
-   Position3D operator/(float other) {
-    Position3D ret = {
-      val[0] / other,
-      val[1] / other,
-      val[2] / other
-    };
-    return ret;
-   }
-   double length() {
-    return sqrtf(pow(val[0], 2) + pow(val[1], 2) + pow(val[2], 2));
-   }
-   void normalize() {
-    double len = (*this).length();
-    *this = *this / len;
-   }
-};
+#include "common.h"
+#include "reference_volume.h"
 
 struct ui_state{
    std::string path;
@@ -97,25 +27,24 @@ struct ui_state{
 
 class frame_emitter {
   public:
-    clw_context ctx;
     virtual ~frame_emitter() { };
-    virtual void image_set(volume_block *b) = 0;
+    virtual void image_set(reference_volume *volume) = 0;
     virtual void next_event_code_set(const std::string cl_code) = 0;
     virtual void* render_frame(struct ui_state &state, bool &frame_changed) = 0;
     virtual void* render_tf(const unsigned int width, const unsigned int height) = 0;
-    virtual Histogram_Stats fetch_histogram_stats() = 0;
 };
 
 class ui {
   private:
+    clw_context &ctx;
     SDL_Window *window;
     SDL_GLContext gl_context;
     GLuint frametexture;
     GLuint tftexture;
     std::string path;
-    void flush_tf(frame_emitter *emitter, std::vector<tf_selection*> selection);
+    void flush_tf(frame_emitter *emitter, Volume_Stats stats, std::vector<tf_selection*> selection);
   public:
-    ui(const char *path);
+    ui(const char *path, clw_context &c);
     ~ui();
     void run(frame_emitter *emitter);
     const GLuint frametexture_get(void);
