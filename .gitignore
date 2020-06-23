@@ -2,4 +2,3 @@ build*
 .clangd
 .clang_commands
 compile_commands.json
-subprojects/*
