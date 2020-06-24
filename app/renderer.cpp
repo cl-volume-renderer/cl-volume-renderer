@@ -13,7 +13,7 @@ volume_block b({0}, 0, 0, 0, 0, 0, 0);
 
 renderer::renderer(clw_context &c)
 : ctx(c),
-  render_func(ctx, "ray_marching.cl", "render", " is_event"),
+  render_func(ctx, "empty.cl", "empty"),
   frame(ctx, std::move(output), {2048, 1024,1}),
   buffer_volume(ctx, std::move(buf_init)),
   tfframe(ctx, std::move(tfoutput), {2, 2}),
