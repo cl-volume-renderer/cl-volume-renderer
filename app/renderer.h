@@ -12,7 +12,7 @@ class renderer : public frame_emitter {
     clw_context &ctx;
     clw_function render_func;
     clw_image<unsigned char,4> frame; //frame output in 2D
-    clw_vector<short> buffer_volume; //image data input in 3D
+    clw_vector<unsigned short> buffer_volume; //image data input in 3D
     clw_image<unsigned char, 4> tfframe;
     const reference_volume *volume; //image data input in 3D
     const env_map *emap;

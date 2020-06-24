@@ -6,7 +6,7 @@
 
 std::vector<unsigned char> output = std::vector<unsigned char>(2048*1024*4);
 std::vector<unsigned char> tfoutput = std::vector<unsigned char>(2*2*4);
-std::vector<short> buf_init(8*4);
+std::vector<unsigned short> buf_init(8*4);
 std::vector<short> ref_init(8);
 std::vector<short> sdf_init(8);
 volume_block b({0}, 0, 0, 0, 0, 0, 0);
@@ -36,8 +36,8 @@ void renderer::image_set(const reference_volume *rv, const env_map *map)
 void renderer::flush_changes()
 {
   //resources for rendering
-  std::vector<short> buffer(volume->get_volume_length()*4, 0);
-  buffer_volume = clw_vector<short>(ctx, std::move(buffer));
+  std::vector<unsigned short> buffer(volume->get_volume_length()*4, 0);
+  buffer_volume = clw_vector<unsigned short>(ctx, std::move(buffer));
   buffer_volume.push();
 
   //flush changes to render func
