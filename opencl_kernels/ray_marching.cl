@@ -30,15 +30,19 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
       const float3 normal = -normalize(gradient_prewitt_nn(reference_volume, make_float4(current_ray.origin,0)));
       current_ray = ray_bounce(current_ray, normal,random_seed);
       current_ray.origin += current_ray.direction*3;
-      /////AO ray-shooting
 
-      current_ray = march_to_next_event(current_ray, reference_volume,sdf, &ray_event);
-      if(ray_event == Exit_volume){
-        uint4 light_map = sample_environment_map(current_ray, environment_map);
-        buffer_value.x = light_map.x;
-        buffer_value.y = light_map.y;
-        buffer_value.z = light_map.z;
-        
+
+      //Indirect lighting with 8 bounces ;)
+      for(int i = 8; i <= 8 + 8; ++i){
+        current_ray = march_to_next_event(current_ray, reference_volume,sdf, &ray_event);
+        if(ray_event == Exit_volume){
+          float factor = 8.0/i;
+          uint4 light_map = sample_environment_map(current_ray, environment_map);
+          buffer_value.x = light_map.x*factor;
+          buffer_value.y = light_map.y*factor;
+          buffer_value.z = light_map.z*factor;
+          break;
+        }
       }
       atomic_buffer_volume_add4f(reference_dimensions, buffer_volume, make_float4(hit_information.origin, 0), buffer_value);
     }
