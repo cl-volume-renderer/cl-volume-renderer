@@ -29,14 +29,7 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
 
       const float3 normal = -normalize(gradient_prewitt_nn(reference_volume, make_float4(current_ray.origin,0)));
       current_ray = ray_bounce(current_ray, normal,random_seed);
-      
-      current_ray = march(current_ray,sdf);
-      current_ray = march(current_ray,sdf);
-      current_ray = march(current_ray,sdf);
-      current_ray = march(current_ray,sdf);
-      current_ray = march(current_ray,sdf);
-      current_ray = march(current_ray,sdf);
-      current_ray = march(current_ray,sdf);
+      current_ray.origin += current_ray.direction*3;
       /////AO ray-shooting
 
       current_ray = march_to_next_event(current_ray, reference_volume,sdf, &ray_event);
