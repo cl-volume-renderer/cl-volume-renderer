@@ -20,7 +20,6 @@ class renderer : public frame_emitter {
     std::string local_cl_code;
   public:
     renderer(clw_context &ctx);
-    ~renderer();
     void image_set(const reference_volume *rv, const env_map *map) override;
     void flush_changes() override;
     void* render_frame(struct ui_state &state, bool &frame_changed) override;
