@@ -21,11 +21,11 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
   enum event ray_event;
   current_ray = march_to_next_event(surface_ray, reference_volume, sdf, &ray_event);
   if(ray_event == Hit){
-    buffer_value = buffer_volume_read4f(reference_dimensions, buffer_volume, make_float4(current_ray.origin,0));
+    //buffer_value = buffer_volume_read4f(reference_dimensions, buffer_volume, make_float4(current_ray.origin,0));
     hit_information = current_ray;
     //Compute AO further?
-    if(buffer_value.w < 500){
-      buffer_value.w = buffer_value.w + 1;
+    if(atomic_allow_write_maxf(reference_dimensions ,buffer_volume,make_float4(current_ray.origin,0), 500)){
+      //buffer_value.w = buffer_value.w + 1;
 
       const float3 normal = -normalize(gradient_prewitt_nn(reference_volume, make_float4(current_ray.origin,0)));
       current_ray = ray_bounce(current_ray, normal,random_seed);
@@ -35,12 +35,12 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
       current_ray = march_to_next_event(current_ray, reference_volume,sdf, &ray_event);
       if(ray_event == Exit_volume){
         uint4 light_map = sample_environment_map(current_ray, environment_map);
-        buffer_value.x += light_map.x;
-        buffer_value.y += light_map.y;
-        buffer_value.z += light_map.z;
+        buffer_value.x = light_map.x;
+        buffer_value.y = light_map.y;
+        buffer_value.z = light_map.z;
         
       }
-      buffer_volume_write4f(reference_dimensions, buffer_volume, make_float4(hit_information.origin, 0), buffer_value);
+      atomic_buffer_volume_add4f(reference_dimensions, buffer_volume, make_float4(hit_information.origin, 0), buffer_value);
     }
   }else{
     return 0.0;
