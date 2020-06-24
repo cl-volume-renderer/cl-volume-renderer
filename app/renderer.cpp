@@ -4,25 +4,16 @@
 #include <cstdlib>
 #include <set>
 
-std::vector<unsigned char> output = std::vector<unsigned char>(2048*1024*4);
-std::vector<unsigned char> tfoutput = std::vector<unsigned char>(2*2*4);
-std::vector<unsigned short> buf_init(8*4);
-std::vector<short> ref_init(8);
-std::vector<short> sdf_init(8);
-volume_block b({0}, 0, 0, 0, 0, 0, 0);
+#define SCREEN_HEIGHT 1024
+#define SCREEN_WIDTH 2048
 
 renderer::renderer(clw_context &c)
 : ctx(c),
   render_func(ctx, "empty.cl", "empty"),
-  frame(ctx, std::move(output), {2048, 1024,1}),
-  buffer_volume(ctx, std::move(buf_init)),
-  tfframe(ctx, std::move(tfoutput), {2, 2}),
+  frame(ctx, std::move(std::vector<unsigned char>(SCREEN_WIDTH*SCREEN_HEIGHT*4)), {SCREEN_WIDTH, SCREEN_HEIGHT,1}),
+  buffer_volume(ctx, std::vector<unsigned short>(8*4)),
+  tfframe(ctx,  std::vector<unsigned char>(2*2*4), {2, 2}),
   sdf(ctx)
-{
-
-}
-
-renderer::~renderer()
 {
 
 }
