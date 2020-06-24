@@ -139,15 +139,15 @@ inline enum event get_event(__read_only image3d_t reference_volume, float4 posit
 
 struct ray march(struct ray current_ray, __read_only image3d_t sdf){
   const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
-  float signed_distance = read_imagei(sdf, smp, make_float4(current_ray.origin,0)).x;
-  const float step_size = max(signed_distance*0.9f, 0.5f);//Choose this dyn. later
+  float signed_distance = read_imagei(sdf, smp, make_int(make_float4(current_ray.origin,0))).x;
+  float step_size = max(signed_distance, 0.5f);//Choose this dyn. later
   const struct ray return_ray = {current_ray.origin + step_size*current_ray.direction, current_ray.direction};
   return return_ray;
 }
 
 struct ray march_to_next_event(struct ray current_ray, __read_only image3d_t reference_volume, __read_only image3d_t sdf, enum event *event_type){
   enum event internal_event = None;
-  for(int i = 0; i < 800; ++i){
+  for(int i = 0; i < 70; ++i){
     current_ray = march(current_ray, sdf);
     internal_event = get_event(reference_volume, make_float4(current_ray.origin,0));
     if(internal_event != None){
