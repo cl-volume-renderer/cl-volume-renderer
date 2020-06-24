@@ -30,14 +30,21 @@ renderer::~renderer()
 void renderer::image_set(const reference_volume *rv, const env_map *map)
 {
   volume = rv;
+  emap = map;
+}
+
+void renderer::flush_changes()
+{
   //resources for rendering
   std::vector<short> buffer(volume->get_volume_length()*4, 0);
   buffer_volume = clw_vector<short>(ctx, std::move(buffer));
   buffer_volume.push();
 
-  //resources for the sdf caclulation
-  sdf = signed_distance_field(ctx, *volume, local_cl_code != "" ? local_cl_code : "inline bool is_event_gen(short value, short gradient){\n return false;\n}\n");
-  emap = map;
+  //flush changes to render func
+  render_func = clw_function(ctx, "ray_marching.cl", "render", local_cl_code);
+
+  //rebuild sdf with correct is_event func.
+  sdf = signed_distance_field(ctx, *volume, local_cl_code);
 }
 
 void* renderer::render_tf(const unsigned int height, const unsigned int width)
@@ -134,10 +141,6 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
 void renderer::next_event_code_set(const std::string cl_code)
 {
    local_cl_code = cl_code;
-
-   render_func = clw_function(ctx, "ray_marching.cl", "render", local_cl_code);
-
-   sdf = signed_distance_field(ctx, *volume, local_cl_code);
 }
 
 void* renderer::render_frame(struct ui_state &state, bool &frame_changed)

@@ -22,7 +22,9 @@ class renderer : public frame_emitter {
     renderer(clw_context &ctx);
     ~renderer();
     void image_set(const reference_volume *rv, const env_map *map) override;
+    void flush_changes() override;
     void* render_frame(struct ui_state &state, bool &frame_changed) override;
     void* render_tf(const unsigned int width, const unsigned int height) override;
     void next_event_code_set(const std::string cl_code) override;
+
 };

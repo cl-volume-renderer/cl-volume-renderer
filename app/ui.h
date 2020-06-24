@@ -31,6 +31,7 @@ class frame_emitter {
     virtual ~frame_emitter() { };
     virtual void image_set(const reference_volume *volume, const env_map *map) = 0;
     virtual void next_event_code_set(const std::string cl_code) = 0;
+    virtual void flush_changes() = 0;
     virtual void* render_frame(struct ui_state &state, bool &frame_changed) = 0;
     virtual void* render_tf(const unsigned int width, const unsigned int height) = 0;
 };

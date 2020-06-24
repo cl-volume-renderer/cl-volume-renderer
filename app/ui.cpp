@@ -190,6 +190,8 @@ void ui::run(frame_emitter *emitter) {
     _create_tf(tftexture, emitter);
     flush_tf(emitter, rv.get_volume_stats(), imgui_ui_state.selection);
 
+    emitter->flush_changes();
+
     while (!done) {
         bool frame_changed;
         SDL_Event event;
@@ -240,6 +242,7 @@ void ui::run(frame_emitter *emitter) {
         }
         if (ImGui::Button("Flush Caches & All")) {
           flush_tf(emitter, rv.get_volume_stats(), imgui_ui_state.selection);
+          emitter->flush_changes();
         }
         ImGui::End();
 
