@@ -31,7 +31,7 @@ signed_distance_field::signed_distance_field(clw_context &c, const reference_vol
   //this here is needed for nvidia to ensure that in another call with sdf as parameter to not contain gargabe
   sdf.pull();
   sdf.push();
-  TIME_PRINT("stats fetch time");
+  TIME_PRINT("sdf calc time");
 }
 
 clw_image<short>& signed_distance_field::get_sdf_buffer() {
