@@ -49,6 +49,7 @@ void renderer::flush_changes()
 
 void* renderer::render_tf(const unsigned int height, const unsigned int width)
 {
+  TIME_START();
   std::vector<unsigned char> tf_buffer(height*width*4);
   clw_image<unsigned char, 4> tmp(ctx, std::move(tf_buffer), {width, height});
   tfframe = std::move(tmp);
@@ -111,6 +112,7 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
     {16,16}, tfframe, frame, history, (int)history.size(), stats);
 
   stats.pull();
+  TIME_PRINT("Tf render time");
 
   /*
   frame.pull();
@@ -122,11 +124,11 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
     }
     printf("\n");
   }
-*/
+
   for (int i = 0; i < 5; ++i) {
     printf("%d\n", stats[i]);
   }
-/*
+
   for (int x = 0; x < 50; ++x) {
     for (int y = 0; y < 50; ++y) {
       printf("%d, ", tfframe[(y*50+x)*4]);

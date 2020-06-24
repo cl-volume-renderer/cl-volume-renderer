@@ -7,6 +7,7 @@
 #include <clw_function.h>
 #include "volume_block.h"
 #include "common.h"
+#include "debug_helper.h"
 
 struct Volume_Stats{
   float min_v;
@@ -37,6 +38,7 @@ class reference_volume {
                          volume(ctx, std::move(b->m_voxels), volume_size, true),
                          value_range({0, 0}),
                          gradient_range({0, 0}) {
+      TIME_START();
       //fetch stats
       std::vector<int> stats_buffer {
         std::numeric_limits<int>::max(),
@@ -57,6 +59,7 @@ class reference_volume {
       value_range[1] = stats[1];
       gradient_range[0] = stats[2];
       gradient_range[1] = stats[3];
+      TIME_PRINT("stats fetch time");
     }
 
     std::array<int, 2> get_value_range() const {

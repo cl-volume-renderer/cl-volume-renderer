@@ -1,7 +1,9 @@
 #include "signed_distance_field.h"
+#include "debug_helper.h"
 
 signed_distance_field::signed_distance_field(clw_context &c, const reference_volume &rv, std::string local_cl_code) :
   sdf(c, std::move(std::vector<short>(rv.get_volume_length())), rv.get_volume_size(), true) {
+  TIME_START();
   auto sdf_pong = clw_image<short>(c, std::vector<short>(rv.get_volume_length()), rv.get_volume_size());
 
   //first fill the sdf image with -1 for *inside* a interesting area 1 outside a interesting area
@@ -12,8 +14,6 @@ signed_distance_field::signed_distance_field(clw_context &c, const reference_vol
 
   clw_vector<int> atomic_add_buffer(c, std::vector<int>(1,0));
   auto sdf_generation_initialization = clw_function(c, "signed_distance_field.cl", "create_signed_distance_field", local_cl_code);
-  printf("Starting to build SDF\n");
-  clock_t start = clock();
   for (int i = 0; i < 1000; ++i) {
     atomic_add_buffer[0] = 0;
     atomic_add_buffer.push();
@@ -27,11 +27,11 @@ signed_distance_field::signed_distance_field(clw_context &c, const reference_vol
       break;
     }
   }
-  printf("Finished building SDF (%f)\n", (float)(clock() - start) / CLOCKS_PER_SEC);
 
   //this here is needed for nvidia to ensure that in another call with sdf as parameter to not contain gargabe
   sdf.pull();
   sdf.push();
+  TIME_PRINT("stats fetch time");
 }
 
 clw_image<short>& signed_distance_field::get_sdf_buffer() {
