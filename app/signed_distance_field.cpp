@@ -7,25 +7,17 @@ signed_distance_field::signed_distance_field(clw_context &c, const reference_vol
   auto sdf_pong = clw_image<short>(c, std::vector<short>(rv.get_volume_length()), rv.get_volume_size());
 
   //first fill the sdf image with -1 for *inside* a interesting area 1 outside a interesting area
-  auto sdf_generation_init = clw_function(c, "signed_distance_field.cl", "create_boolean_image", local_cl_code);
+  auto sdf_generation_init = clw_function(c, "signed_distance_field.cl", "create_base_image", local_cl_code);
   sdf_generation_init.execute(rv.get_volume_size_evenness(8), {4,4,4}, rv.get_reference_volume(), sdf);
 
   //now iterate
-
-  clw_vector<int> atomic_add_buffer(c, std::vector<int>(1,0));
   auto sdf_generation_initialization = clw_function(c, "signed_distance_field.cl", "create_signed_distance_field", local_cl_code);
-  for (int i = 0; i < 1000; ++i) {
-    atomic_add_buffer[0] = 0;
-    atomic_add_buffer.push();
+  for (int i = 0; i < 400; ++i) { //120 MUST be even
     //FIXME this is only needed because swap does not like clw_image
     if (i % 2 == 0)
-      sdf_generation_initialization.execute(rv.get_volume_size_evenness(8), {4,4,4}, sdf, sdf_pong, atomic_add_buffer);
+      sdf_generation_initialization.execute(rv.get_volume_size_evenness(8), {4,4,4}, sdf, sdf_pong);
     else
-      sdf_generation_initialization.execute(rv.get_volume_size_evenness(8), {4,4,4}, sdf_pong, sdf, atomic_add_buffer);
-    atomic_add_buffer.pull();
-    if (atomic_add_buffer[0] == 0 && i % 2 == 1) { //FIXME the later part is only required because sdf is not always filled with the correct values
-      break;
-    }
+      sdf_generation_initialization.execute(rv.get_volume_size_evenness(8), {4,4,4}, sdf_pong, sdf);
   }
 
   //this here is needed for nvidia to ensure that in another call with sdf as parameter to not contain gargabe
