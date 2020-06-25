@@ -14,10 +14,16 @@ signed_distance_field::signed_distance_field(clw_context &c, const reference_vol
   //now iterate
   auto sdf_generation_initialization = clw_function(c, "signed_distance_field.cl", "create_signed_distance_field", local_cl_code);
   auto *ping = &sdf, *pong = &sdf_pong;
+  clw_vector<int> atomic_add_buffer(c, std::vector<int>(1,0));
   for (unsigned int i = 1; i <= max_iterations+(max_iterations % 2)+1; ++i) {
-
-    sdf_generation_initialization.execute(rv.get_volume_size_evenness(8), {4,4,4}, *ping, *pong, i);
+    atomic_add_buffer[0] = 0;
+    atomic_add_buffer.push();
+    sdf_generation_initialization.execute(rv.get_volume_size_evenness(8), {4,4,4}, *ping, *pong, i, atomic_add_buffer);
     std::swap(ping, pong);
+    atomic_add_buffer.pull();
+    if (atomic_add_buffer[0] == 0 && i % 2 == 1) {
+      break;
+    }
   }
 
   //this here is needed for nvidia to ensure that in another call with sdf as parameter to not contain gargabe
