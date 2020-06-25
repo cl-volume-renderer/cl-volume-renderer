@@ -15,6 +15,7 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
   struct ray current_ray = surface_ray;
   struct ray hit_information = {0};
   uint4 buffer_value = {0,0,0,0};
+  const short information_dev = 1;
 
   float3 normal;
 
@@ -24,26 +25,30 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
     //buffer_value = buffer_volume_read4f(reference_dimensions, buffer_volume, make_float4(current_ray.origin,0));
     hit_information = current_ray;
     //Compute AO further?
-    if(atomic_allow_write_maxf(reference_dimensions ,buffer_volume,make_float4(current_ray.origin,0), 500)){
+    if(atomic_allow_write_maxf(reference_dimensions ,buffer_volume,make_float4(current_ray.origin,0), 256*information_dev)){
       //buffer_value.w = buffer_value.w + 1;
 
       const float3 normal = -normalize(gradient_prewitt_nn(reference_volume, make_float4(current_ray.origin,0)));
-      current_ray = ray_bounce(current_ray, normal,random_seed);
+      const int dist_count = 1;
+      const int path_length = 8;
+
+      for(int o = 1; o <= dist_count; ++o){
+      current_ray = ray_bounce(hit_information, normal,random_seed + o);
       current_ray.origin += current_ray.direction*3;
 
-
-      //Indirect lighting with 8 bounces ;)
-      for(int i = 8; i <= 8 + 8; ++i){
-        current_ray = march_to_next_event(current_ray, reference_volume,sdf, &ray_event);
-        if(ray_event == Exit_volume){
-          float factor = 8.0/i;
-          uint4 light_map = sample_environment_map(current_ray, environment_map);
-          buffer_value.x = light_map.x*factor;
-          buffer_value.y = light_map.y*factor;
-          buffer_value.z = light_map.z*factor;
-          break;
+        for(int i = 8; i <= 8 + path_length; ++i){
+          current_ray = march_to_next_event(current_ray, reference_volume,sdf, &ray_event);
+          if(ray_event == Exit_volume){
+            float factor = 8.0/i;
+            uint4 light_map = sample_environment_map(current_ray, environment_map);
+            buffer_value.x += light_map.x*factor/information_dev;
+            buffer_value.y += light_map.y*factor/information_dev;
+            buffer_value.z += light_map.z*factor/information_dev;
+            break;
+          }
         }
       }
+      buffer_value = buffer_value/dist_count;
       atomic_buffer_volume_add4f(reference_dimensions, buffer_volume, make_float4(hit_information.origin, 0), buffer_value);
     }
   }else{
@@ -58,7 +63,7 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
 
     
 
-  return return_int*2;
+  return return_int*information_dev;
  
 }
 
