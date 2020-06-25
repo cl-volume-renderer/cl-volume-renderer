@@ -41,7 +41,7 @@ class clw_vector {
   }
   // Delete special member functions for now,
   // can be implemented if needed
-  clw_vector(const clw_vector& other, const bool push_on_construction = false): clw_vector(other.m_context, std::copy(other.m_host_array)){};
+  clw_vector(const clw_vector& other, const bool push_on_construction = false): clw_vector(*other.m_context,std::vector<TInternal>(other.m_host_array)){};
   clw_vector(clw_vector&&) = delete;
   clw_vector& operator=(const clw_vector&) = delete;
   clw_vector& operator=(clw_vector&& other){
