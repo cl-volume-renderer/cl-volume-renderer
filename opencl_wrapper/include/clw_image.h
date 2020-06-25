@@ -141,7 +141,8 @@ class clw_image {
   }
   // Delete special member functions for now,
   // can be implemented if needed
-  clw_image(const clw_image&) = delete;
+  clw_image(const clw_image& other, const bool push_on_construction = false): clw_image(other.m_context, std::copy(other.m_host_array),other.m_dimensions,push_on_construction){
+  };
   clw_image(clw_image&&) = delete;
   clw_image& operator=(const clw_image&) = delete;
   clw_image& operator=(clw_image&& other){
