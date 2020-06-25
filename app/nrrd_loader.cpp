@@ -10,7 +10,7 @@
 // Keys for key/value parsing
 constexpr const auto type_key = "type";
 constexpr const auto size_key = "sizes";
-constexpr const auto encoding_key = "encording";
+constexpr const auto encoding_key = "encoding";
 constexpr const auto endian_key = "endian";
 constexpr const auto dimension_key = "dimension";
 constexpr const auto space_direction_key = "space directions";
