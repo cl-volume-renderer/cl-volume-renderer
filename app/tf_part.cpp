@@ -50,9 +50,9 @@ std::string tf_rect_selection::create_cl_condition(Volume_Stats stats) {
    * {min,max}{_v, _g} are between 0.0 and 1.0
    */
   std::ostringstream cl_code;
-  cl_code << "  if(value > ";
+  cl_code << "  if(value >= ";
   cl_code << stats.min_v + (min_v)*(stats.max_v - stats.min_v);
-  cl_code << " && value < ";
+  cl_code << " && value <= ";
   cl_code << stats.min_v + (max_v)*(stats.max_v - stats.min_v);
   /*cl_code << " && gradient > ";
   cl_code << stats.min_g + (min_g)*(stats.max_g - stats.min_g);
