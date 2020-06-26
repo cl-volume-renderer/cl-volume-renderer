@@ -32,6 +32,8 @@ class reference_volume {
     clw_image<const short> volume; //image data input in 3D
     std::array<int, 2> value_range;
     std::array<int, 2> gradient_range;
+    std::array<int, 2> value_clip = {std::numeric_limits<int>::min(), std::numeric_limits<int>::max()};
+    std::array<int, 2> gradient_clip = {std::numeric_limits<int>::min(), std::numeric_limits<int>::max()};
   public:
     reference_volume(clw_context &ctx, volume_block *b) :
                          volume_size({(unsigned int)b->m_voxel_count_x, (unsigned int)b->m_voxel_count_y, (unsigned int)b->m_voxel_count_z}),
@@ -59,15 +61,24 @@ class reference_volume {
       value_range[1] = stats[1];
       gradient_range[0] = stats[2];
       gradient_range[1] = stats[3];
+      std::cout << gradient_range[1];
       TIME_PRINT("stats fetch time");
     }
 
+    void set_value_clip(std::array<int, 2> clip) {
+      value_clip = clip;
+    }
+
+    void set_gradient_clip(std::array<int, 2> clip) {
+      gradient_clip = clip;
+    }
+
     std::array<int, 2> get_value_range() const {
-      return value_range;
+      return {std::max(value_clip[0], value_range[0]), std::min(value_clip[1], value_range[1])};
     }
 
     std::array<int, 2> get_gradient_range() const {
-      return gradient_range;
+      return {std::max(gradient_clip[0], gradient_range[0]), std::min(gradient_clip[1], gradient_range[1])};
     }
 
     std::array<size_t, 3> get_volume_size() const {
@@ -85,6 +96,6 @@ class reference_volume {
       return volume;
     }
     Volume_Stats get_volume_stats()  const {
-      return Volume_Stats(value_range, gradient_range);
+      return Volume_Stats(get_value_range(), get_gradient_range());
     }
 };

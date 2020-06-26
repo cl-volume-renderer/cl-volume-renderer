@@ -180,6 +180,8 @@ void ui::run(frame_emitter *emitter) {
     nrrd_loader vloader;
     volume_block v = vloader.load_file(nrrd_path);
     reference_volume rv(ctx, &v);
+    rv.set_value_clip({-2000, 3000});
+    rv.set_gradient_clip({0, 4000});
 
     hdre_loader iloader;
     image em = iloader.load_file(env_map_path);
