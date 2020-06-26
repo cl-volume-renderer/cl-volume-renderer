@@ -45,23 +45,6 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
   clw_image<unsigned char, 4> tmp(ctx, std::move(tf_buffer), {width, height});
   tfframe = std::move(tmp);
 
-  //time for the TF
-  //first we fetch the min & max of both, the values and the
-  std::vector<int> stats_buffer {
-    std::numeric_limits<int>::max(),
-    std::numeric_limits<int>::min(),
-    std::numeric_limits<int>::max(),
-    std::numeric_limits<int>::min(),
-    std::numeric_limits<int>::min()};
-  clw_vector<int> stats(ctx, std::move(stats_buffer));
-  stats.push();
-
-  auto tf_min_max_construction = clw_function(ctx, "transpherefunction.cl", "tf_fetch_min_max");
-  tf_min_max_construction.execute(
-    volume->get_volume_size_evenness(8),
-    {4,4,4}, volume->get_reference_volume(),
-    stats);
-
   //then we are counting
   std::vector<unsigned int> frame_buffer(width*height, 0);
   clw_vector<unsigned int> frame(ctx, std::move(frame_buffer));
@@ -71,7 +54,7 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
   tf_frame_construction.execute(
     volume->get_volume_size_evenness(8),
     {4,4,4}, volume->get_reference_volume(), frame, width, height,
-    stats);
+    volume->get_volume_stats().min_v, volume->get_volume_stats().max_v, volume->get_volume_stats().min_g, volume->get_volume_stats().max_g);
   //build a map from the value to the position of ranking all values in the frame
   frame.pull();
 
@@ -100,9 +83,8 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
   auto tf_frame_flush = clw_function(ctx, "transpherefunction.cl", "tf_flush_color_frame");
   tf_frame_flush.execute(
     {evenness(tfframe.get_dimensions()[0], 16), evenness(tfframe.get_dimensions()[1], 16)},
-    {16,16}, tfframe, frame, history, (int)history.size(), stats);
+    {16,16}, tfframe, frame, history, (int)history.size());
 
-  stats.pull();
   TIME_PRINT("Tf render time");
 
   /*
