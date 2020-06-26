@@ -99,6 +99,11 @@ struct ray ray_bounce(struct ray current_ray, float3 normal, int seed){
   return bounced_ray;
 }
 
+struct ray ray_bounce_fake_reflectance(struct ray current_ray, float3 normal, int seed, float roughness){
+  const struct ray bounced_ray = {current_ray.origin + current_ray.direction, get_hemisphere_direction_reflective(normal, seed, roughness)};
+  return bounced_ray;
+}
+
 inline bool exited_volume(__read_only image3d_t reference_volume, float4 position){
   const int3 ref_dimensions = {get_image_width(reference_volume), get_image_height(reference_volume), get_image_depth(reference_volume)};
   const bool exited_max = ref_dimensions.x < position.x | ref_dimensions.y < position.y | ref_dimensions.z < position.z;

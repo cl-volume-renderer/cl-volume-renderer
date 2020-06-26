@@ -11,3 +11,12 @@ float3 get_hemisphere_direction(float3 normal, int seed){
   const float decider = dot(direction, normal);
   return normalize(direction * decider);
 }
+
+float3 get_hemisphere_direction_reflective(float3 normal, int seed, float roughness){
+  float random = (get_global_id(0)+1)*(get_global_id(1)+1)*seed;
+  const float3 direction = {cos(random*197), sin(random*41), cos(-random*33)};
+  const float decider = dot(direction, normal);
+  const float3 correct_direction = direction * decider;
+  return normalize(normal*(1.0f - roughness) + direction*(roughness));
+  return normalize(direction * decider);
+}
