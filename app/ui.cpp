@@ -219,7 +219,7 @@ void ui::run(frame_emitter *emitter) {
         ImGui::Text(" Local  Z: %.3f", state.direction_look[1]);
         ImGui::End();
 
-        ImGui::Begin("Transphere function");
+        ImGui::Begin("Transfere function");
         ImGui::Image((ImTextureID)(intptr_t)tftexture, {500,500});
 
         ImVec2 win_pos = ImGui::GetWindowPos();
