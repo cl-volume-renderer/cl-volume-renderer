@@ -34,7 +34,7 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
 
       for(int o = 1; o <= dist_count; ++o){
       current_ray = ray_bounce(hit_information, normal,random_seed + o);
-      current_ray.origin += current_ray.direction*3;
+      current_ray.origin += normal*2;
 
         for(int i = 8; i <= 8 + path_length; ++i){
           current_ray = march_to_next_event(current_ray, reference_volume,sdf, &ray_event);
