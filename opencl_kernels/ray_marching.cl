@@ -33,7 +33,7 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
       const int path_length = 8;
 
       for(int o = 1; o <= dist_count; ++o){
-      current_ray = ray_bounce(hit_information, normal,random_seed + o);
+      current_ray = ray_bounce_fake_reflectance(hit_information, normal,random_seed + o, 1.0f/*roughness*/);
       current_ray.origin += normal*2;
 
         for(int i = 8; i <= 8 + path_length; ++i){
