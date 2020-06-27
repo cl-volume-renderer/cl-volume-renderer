@@ -7,6 +7,10 @@
 
 
 uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volume, __read_only image3d_t sdf, __read_only image2d_t environment_map, __global unsigned short* buffer_volume, int random_seed){
+
+  int dist_count = 2 - (random_seed % 2);
+  int path_length = 1 + (random_seed % 2)*3;
+
   const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
   const int3 reference_dimensions = {get_image_width(reference_volume), get_image_height(reference_volume), get_image_depth(reference_volume)};
 
@@ -29,14 +33,12 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
       //buffer_value.w = buffer_value.w + 1;
 
       const float3 normal = -normalize(gradient_prewitt_nn(reference_volume, make_float4(current_ray.origin,0)));
-      const int dist_count = 1;
-      const int path_length = 8;
 
       for(int o = 1; o <= dist_count; ++o){
       current_ray = ray_bounce_fake_reflectance(hit_information, normal,random_seed + o, 1.0f/*roughness*/);
       current_ray.origin += normal*2;
 
-        for(int i = 8; i <= 8 + path_length; ++i){
+        for(int i = 8; i <= 7 + path_length; ++i){
           current_ray = march_to_next_event(current_ray, reference_volume,sdf, &ray_event);
           if(ray_event == Exit_volume){
             float factor = 8.0/i;
@@ -45,6 +47,10 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
             buffer_value.y += light_map.y*factor/information_dev;
             buffer_value.z += light_map.z*factor/information_dev;
             break;
+          }else if(ray_event == Hit){
+            const float3 normal = -normalize(gradient_prewitt_nn(reference_volume, make_float4(current_ray.origin,0)));
+            current_ray = ray_bounce_fake_reflectance(current_ray, normal,random_seed + o, 1.0f/*roughness*/);
+            current_ray.origin += normal*2;
           }
         }
       }
