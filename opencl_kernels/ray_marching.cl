@@ -49,7 +49,7 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
             break;
           }else if(ray_event == Hit){
             const float3 normal = -normalize(gradient_prewitt_nn(reference_volume, make_float4(current_ray.origin,0)));
-            current_ray = ray_bounce_fake_reflectance(current_ray, normal,random_seed + o, 1.0f/*roughness*/);
+            current_ray = ray_bounce_fake_reflectance(current_ray, normal,random_seed + o + i, 1.0f/*roughness*/);
             current_ray.origin += normal*2;
           }
         }
