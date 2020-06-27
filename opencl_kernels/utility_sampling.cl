@@ -26,18 +26,21 @@ float3 get_hemisphere_direction(float3 normal, int seed){
   int random_access_x = hash(useed * 0x182205bd);
   int random_access_y = hash(useed * 0xe8d052f3);
   int random_access_z = hash(useed * 0xf1981dcf);
-  
   const float3 direction = {(random_access_x % RND_ACCURACY) - RND_ACCURACY_SUB, (random_access_y % RND_ACCURACY) - RND_ACCURACY_SUB, (random_access_z % RND_ACCURACY) - RND_ACCURACY_SUB};
-
   const float decider = dot(direction, normal);
-  return normalize(direction * decider);
+  const float3 correct_direction = direction * decider;
+
+  return normalize(correct_direction);
 }
 
 float3 get_hemisphere_direction_reflective(float3 normal, int seed, float roughness){
-  float random = (get_global_id(0)+1)*(get_global_id(1)+1)*seed;
-  const float3 direction = {cos(random*197), sin(random*41), cos(-random*33)};
+  unsigned int useed = (unsigned int) seed + (get_global_id(0)+1)*(get_global_id(1)+1);
+  int random_access_x = hash(useed * 0x182205bd);
+  int random_access_y = hash(useed * 0xe8d052f3);
+  int random_access_z = hash(useed * 0xf1981dcf);
+  const float3 direction = {(random_access_x % RND_ACCURACY) - RND_ACCURACY_SUB, (random_access_y % RND_ACCURACY) - RND_ACCURACY_SUB, (random_access_z % RND_ACCURACY) - RND_ACCURACY_SUB};
   const float decider = dot(direction, normal);
-  const float3 correct_direction = direction * decider;
-  return normalize(normal*(1.0f - roughness) + direction*(roughness));
-  return normalize(direction * decider);
+  const float3 correct_direction = normalize(direction * decider);
+
+  return normalize(normal*(1.0f - roughness) + correct_direction*(roughness));
 }
