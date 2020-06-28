@@ -102,7 +102,5 @@ __kernel void create_signed_distance_field(__read_only image3d_t sdf_image, __wr
     local_value.x = (iteration + 1) * mul;
     write_imagei(signed_distance_field, pos, local_value);
     atomic_inc(add_buffer);
-  } else if (absolut_current_value == iteration) { //this is needed to copy over changes from the pong in the earlier iteration, so we dont write allways
-    write_imagei(signed_distance_field, pos, local_value);
   }
 }
