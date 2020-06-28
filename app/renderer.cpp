@@ -26,10 +26,16 @@ void renderer::image_set(const reference_volume *rv, const env_map *map)
 
 void renderer::flush_changes()
 {
+  TIME_START()
   //resources for rendering
-  std::vector<unsigned short> buffer(volume->get_volume_length()*4, 0);
-  buffer_volume = clw_vector<unsigned short>(ctx, std::move(buffer));
-  buffer_volume.push();
+  if (buffer_volume.size() != volume->get_volume_length()*4)// {
+    buffer_volume = clw_vector<unsigned short>(ctx, std::vector<unsigned short>(volume->get_volume_length()*4), false);
+
+  auto buffer_reset = clw_function(ctx, "buffer_reset.cl", "buffer_reset");
+  buffer_reset.execute(
+    volume->get_volume_size_evenness(4),
+    {4,4,4}, volume->get_reference_volume(), buffer_volume);
+  TIME_PRINT("buffer creation time");
 
   //flush changes to render func
   render_func = clw_function(ctx, "ray_marching.cl", "render", local_cl_code);
