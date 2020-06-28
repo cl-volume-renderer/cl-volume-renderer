@@ -18,7 +18,7 @@ signed_distance_field::signed_distance_field(clw_context &c, const reference_vol
   for (unsigned int i = 1; i <= max_iterations+(max_iterations % 2)+1; ++i) {
     atomic_add_buffer[0] = 0;
     atomic_add_buffer.push();
-    sdf_generation_initialization.execute(rv.get_volume_size_evenness(8), {4,4,4}, *ping, *pong, i, atomic_add_buffer);
+    sdf_generation_initialization.execute(rv.get_volume_size_evenness(8), {4,4,4}, *ping, *pong, i, atomic_add_buffer, (unsigned int)max_iterations);
     std::swap(ping, pong);
     atomic_add_buffer.pull();
     if (atomic_add_buffer[0] == 0 && i % 2 == 1) {

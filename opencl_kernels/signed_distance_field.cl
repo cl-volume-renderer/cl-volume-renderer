@@ -46,16 +46,9 @@ __kernel void create_base_image(__read_only image3d_t reference_volume, __write_
   write_imagei(sdf_image_pong, location, result);
 }
 
-__kernel void create_signed_distance_field(__read_only image3d_t sdf_image, __write_only image3d_t signed_distance_field, int iteration, __global int *add_buffer){
+inline short
+neightbour_distance_calc(__read_only image3d_t sdf_image, int4 pos) {
   const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
-  int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
-  int4 reference_size = get_image_dim(sdf_image);
-
-   if (pos.x >= reference_size.x || pos.y >= reference_size.y || pos.z >= reference_size.z)
-     return;
-
-  int4 local_value = read_imagei(sdf_image, smp, pos);
-  short mul = local_value.x < 0 ? -1 : 1;
   short neightbour_distance = SHRT_MAX;
   int abs_added_distance = 0;
   int added_distance = 0;
@@ -78,11 +71,34 @@ __kernel void create_signed_distance_field(__read_only image3d_t sdf_image, __wr
       }
     }
   }
+  if (abs(added_distance) == abs_added_distance)
+    return neightbour_distance;
+  else
+    return 0;
+}
 
+__kernel void create_signed_distance_field(__read_only image3d_t sdf_image, __write_only image3d_t signed_distance_field, int iteration, __global int *add_buffer, int max_iterations){
+  const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
+  int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
+  int4 reference_size = get_image_dim(sdf_image);
+
+   if (pos.x >= reference_size.x || pos.y >= reference_size.y || pos.z >= reference_size.z)
+     return;
+
+  int4 local_value = read_imagei(sdf_image, smp, pos);
   int absolut_current_value = abs(local_value.x);
 
+  if (absolut_current_value < max_iterations) {
+    if (absolut_current_value == iteration)
+      write_imagei(signed_distance_field, pos, local_value);
+    return;
+  }
+
+  short mul = local_value.x < 0 ? -1 : 1;
+  short neightbour_distance = neightbour_distance_calc(sdf_image, pos);
+
   // in case our neighbourhood does contain a value from this iteration, then we are setting our own voxel to iteration +1 and multiply with mul to keep the signedness based on our evevnt location.
-  if ((abs(added_distance) == abs_added_distance && neightbour_distance == iteration)) { //
+  if ((neightbour_distance != 0 && neightbour_distance == iteration)) { //
     local_value.x = (iteration + 1) * mul;
     write_imagei(signed_distance_field, pos, local_value);
     atomic_inc(add_buffer);
