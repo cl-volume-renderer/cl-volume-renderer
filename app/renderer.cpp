@@ -50,7 +50,7 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
   clw_vector<unsigned int> frame(ctx, std::move(frame_buffer));
   frame.push();
 
-  auto tf_frame_construction = clw_function(ctx, "transpherefunction.cl", "tf_sort_values");
+  auto tf_frame_construction = clw_function(ctx, "histogram.cl", "tf_sort_values");
   tf_frame_construction.execute(
     volume->get_volume_size_evenness(8),
     {4,4,4}, volume->get_reference_volume(), frame, width, height,
@@ -80,7 +80,7 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
   clw_vector<int> history(ctx, std::move(history_buffer));
   history.push();
 
-  auto tf_frame_flush = clw_function(ctx, "transpherefunction.cl", "tf_flush_color_frame");
+  auto tf_frame_flush = clw_function(ctx, "histogram.cl", "tf_flush_color_frame");
   tf_frame_flush.execute(
     {evenness(tfframe.get_dimensions()[0], 16), evenness(tfframe.get_dimensions()[1], 16)},
     {16,16}, tfframe, frame, history, (int)history.size());
