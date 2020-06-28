@@ -81,7 +81,7 @@ class reference_volume {
       return {std::max(gradient_clip[0], gradient_range[0]), std::min(gradient_clip[1], gradient_range[1])};
     }
 
-    std::array<size_t, 3> get_volume_size() const {
+    const std::array<size_t, 3>& get_volume_size() const {
       return volume_size;
     }
 
