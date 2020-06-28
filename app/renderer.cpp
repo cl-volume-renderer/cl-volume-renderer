@@ -26,10 +26,16 @@ void renderer::image_set(const reference_volume *rv, const env_map *map)
 
 void renderer::flush_changes()
 {
+  TIME_START()
   //resources for rendering
-  std::vector<unsigned short> buffer(volume->get_volume_length()*4, 0);
-  buffer_volume = clw_vector<unsigned short>(ctx, std::move(buffer));
-  buffer_volume.push();
+  if (buffer_volume.size() != volume->get_volume_length()*4)// {
+    buffer_volume = clw_vector<unsigned short>(ctx, std::vector<unsigned short>(volume->get_volume_length()*4), false);
+
+  auto buffer_reset = clw_function(ctx, "buffer_reset.cl", "buffer_reset");
+  buffer_reset.execute(
+    volume->get_volume_size_evenness(4),
+    {4,4,4}, volume->get_reference_volume(), buffer_volume);
+  TIME_PRINT("buffer creation time");
 
   //flush changes to render func
   render_func = clw_function(ctx, "ray_marching.cl", "render", local_cl_code);
@@ -50,7 +56,7 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
   clw_vector<unsigned int> frame(ctx, std::move(frame_buffer));
   frame.push();
 
-  auto tf_frame_construction = clw_function(ctx, "transpherefunction.cl", "tf_sort_values");
+  auto tf_frame_construction = clw_function(ctx, "histogram.cl", "tf_sort_values");
   tf_frame_construction.execute(
     volume->get_volume_size_evenness(8),
     {4,4,4}, volume->get_reference_volume(), frame, width, height,
@@ -80,7 +86,7 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
   clw_vector<int> history(ctx, std::move(history_buffer));
   history.push();
 
-  auto tf_frame_flush = clw_function(ctx, "transpherefunction.cl", "tf_flush_color_frame");
+  auto tf_frame_flush = clw_function(ctx, "histogram.cl", "tf_flush_color_frame");
   tf_frame_flush.execute(
     {evenness(tfframe.get_dimensions()[0], 16), evenness(tfframe.get_dimensions()[1], 16)},
     {16,16}, tfframe, frame, history, (int)history.size());
