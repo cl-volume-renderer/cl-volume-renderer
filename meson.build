@@ -5,6 +5,12 @@ project('gpgpu-volume-renderer',
 )
 
 add_global_arguments('-DKERNEL_DIR="' + join_paths(meson.current_source_dir(), 'opencl_kernels/')+'"', language : 'cpp')
+
+if get_option('buildtype') != 'release'
+  add_project_arguments('-Og', language: 'cpp')
+endif
+
+
 sdl = dependency('sdl2')
 
 imgui_proj = subproject('imgui')
