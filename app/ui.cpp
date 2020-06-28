@@ -246,8 +246,7 @@ void ui::run(frame_emitter *emitter) {
         if (ImGui::Button("Flush Caches & All")) {
           flush_tf(emitter, rv.get_volume_stats(), imgui_ui_state.selection);
           emitter->flush_changes();
-          //TODO Replace this with a better call to update after applying
-          keysymbol_handle(&state, "R", 0);
+          state.path_changed = true;
         }
         ImGui::End();
 
