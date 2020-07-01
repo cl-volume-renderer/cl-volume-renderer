@@ -53,9 +53,12 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
             float factor = 8.0/i;
 
             uint4 light_map = sample_environment_map(current_ray, environment_map);
-            buffer_value.x += r_energy*light_map.x*factor/information_dev;
-            buffer_value.y += g_energy*light_map.y*factor/information_dev;
-            buffer_value.z += b_energy*light_map.z*factor/information_dev;
+            float atten = 1.0f;
+            atten *= fabs(dot(current_ray.direction, normal));
+
+            buffer_value.x += atten*r_energy*light_map.x*factor/information_dev;
+            buffer_value.y += atten*g_energy*light_map.y*factor/information_dev;
+            buffer_value.z += atten*b_energy*light_map.z*factor/information_dev;
             break;
           }else if(ray_event == Hit){
             const float3 normal = -normalize(gradient_prewitt_nn(reference_volume, make_float4(current_ray.origin,0)));
@@ -79,8 +82,15 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
   //buffer_value /= buffer_value.w;
   buffer_value /= buffer_value.w;
   float4 f = {buffer_value.x, buffer_value.y, buffer_value.z, 0};
+  const float inv_gamma = 1.0f/1.77777777f;
+  const float brightness = 2.0f;
+  f = f / 255.0f;
+  f.x = pow(f.x * brightness, inv_gamma);
+  f.y = pow(f.y * brightness, inv_gamma);
+  f.z = pow(f.z * brightness, inv_gamma);
+  f = f * 255.0f;
 
-  uint4 return_int = {buffer_value.x,buffer_value.y,buffer_value.z,1};
+  uint4 return_int = {f.x,f.y,f.z,1};
   //uint4 return_int = {current_ray.direction.x*128,current_ray.direction.y*128,current_ray.direction.z*128,0};
 
     
