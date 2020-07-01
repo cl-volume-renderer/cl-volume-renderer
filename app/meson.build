@@ -10,3 +10,9 @@ executable('volume-renderer',
    'image.cpp', 'signed_distance_field.cpp'],
   dependencies: [opencl_wrapper, stb, sdl, zlib, imgui, gl],
 )
+
+executable('sdf_benchmark',
+   ['sdf_benchmark.cpp', 'nrrd_loader.cpp',
+   'volume_block.cpp', 'signed_distance_field.cpp'],
+  dependencies: [opencl_wrapper, zlib],
+)
