@@ -22,9 +22,9 @@ float3 gradient_prewitt_nn(__read_only image3d_t reference_volume, float4 positi
 
 
   int dz = 0;
-  dz += read_imagei(reference_volume, sampler, p + z + x).x;
+  //dz += read_imagei(reference_volume, sampler, p + z + x).x;
   //dz += read_imagei(reference_volume, sampler, p + z - x).x;
-  //dz += read_imagei(reference_volume, sampler, p + z    ).x;
+  dz += read_imagei(reference_volume, sampler, p + z    ).x;
   //dz -= read_imagei(reference_volume, sampler, p - z + x).x;
   //dz -= read_imagei(reference_volume, sampler, p - z - x).x;
   dz -= read_imagei(reference_volume, sampler, p - z    ).x;
