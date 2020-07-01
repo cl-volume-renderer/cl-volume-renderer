@@ -49,7 +49,7 @@ __kernel void create_base_image(__read_only image3d_t reference_volume, __write_
 inline short
 neightbour_distance_calc(__read_only image3d_t sdf_image, int4 pos) {
   const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
-  short neightbour_distance = SHRT_MAX;
+  char neightbour_distance = CHAR_MAX;
   int abs_added_distance = 0;
   int added_distance = 0;
 
@@ -59,14 +59,14 @@ neightbour_distance_calc(__read_only image3d_t sdf_image, int4 pos) {
         if (x != 0 && y != 0 && z != 0) {
           int4 offset = {x, y, z, 0};
           int4 value = read_imagei(sdf_image, smp, pos + offset);
-          short tmp = (short) abs(value.x);
+          char tmp = (char) abs(value.x);
           abs_added_distance += tmp;
           added_distance += value.x;
           /* this here is needed because we are walking exactly 1 pixel outside our reference volume at the max and min of each axis here
            * Based on the knowledge how step 1 did init the sdf, we know that the value 0 cannot be the case.
            * This one branche here was benchmarked against a branch for checking if we are inside the volume, the current solution was faster */
           if (tmp > 0)
-            neightbour_distance = min(neightbour_distance, (short)(tmp));
+            neightbour_distance = min(neightbour_distance, (char)(tmp));
         }
       }
     }
@@ -94,8 +94,8 @@ __kernel void create_signed_distance_field(__read_only image3d_t sdf_image, __wr
     return;
   }
 
-  short mul = local_value.x < 0 ? -1 : 1;
-  short neightbour_distance = neightbour_distance_calc(sdf_image, pos);
+  char mul = local_value.x < 0 ? -1 : 1;
+  char neightbour_distance = neightbour_distance_calc(sdf_image, pos);
 
   // in case our neighbourhood does contain a value from this iteration, then we are setting our own voxel to iteration +1 and multiply with mul to keep the signedness based on our evevnt location.
   if ((neightbour_distance != 0 && neightbour_distance == iteration)) { //

@@ -2,10 +2,10 @@
 #include "debug_helper.h"
 
 signed_distance_field::signed_distance_field(clw_context &c, const reference_volume &rv, std::string local_cl_code) :
-  sdf(c, std::move(std::vector<short>(rv.get_volume_length())), rv.get_volume_size(), true) {
+  sdf(c, std::move(std::vector<char>(rv.get_volume_length())), rv.get_volume_size(), true) {
   TIME_START();
   size_t max_iterations = std::min((*std::max_element(rv.get_volume_size().begin(), rv.get_volume_size().end()))/2, (size_t)127);
-  auto sdf_pong = clw_image<short>(c, std::vector<short>(rv.get_volume_length()), rv.get_volume_size());
+  auto sdf_pong = clw_image<char>(c, std::vector<char>(rv.get_volume_length()), rv.get_volume_size());
 
   //first fill the sdf image with -1 for *inside* a interesting area 1 outside a interesting area
   auto sdf_generation_init = clw_function(c, "signed_distance_field.cl", "create_base_image", local_cl_code);
@@ -30,11 +30,42 @@ signed_distance_field::signed_distance_field(clw_context &c, const reference_vol
 }
 
 
-clw_image<short>& signed_distance_field::get_sdf_buffer() {
+clw_image<char>& signed_distance_field::get_sdf_buffer() {
    return sdf;
 }
 
 signed_distance_field::signed_distance_field(clw_context &c) :
-  sdf(c, std::vector<short>(8, 0), {2,2,2}, true) {
+  sdf(c, std::vector<char>(8, 0), {2,2,2}, true) {
 
 }
+
+#if 0
+
+  if (local_pos.x == 0) {
+    int4 offset = {-1, 0, 0, 0};
+    local_lookup[get_local_id(0) + 1 - 1][get_local_id(1) + 1][get_local_id(2) + 1] = is_event(read_imagei(reference_volume, smp, location + offset).x);
+  }
+  if (local_pos.x == local_max_pos.x - 1) {
+    int4 offset = {1, 0, 0, 0};
+    local_lookup[get_local_id(0) + 1 + 1][get_local_id(1) + 1][get_local_id(2) + 1] = is_event(read_imagei(reference_volume, smp, location + offset).x);
+  }
+
+  if (local_pos.y == 0) {
+    int4 offset = {0, -1, 0, 0};
+    local_lookup[get_local_id(0) + 1][get_local_id(1) + 1 - 1][get_local_id(2) + 1] = is_event(read_imagei(reference_volume, smp, location + offset).x);
+  }
+  if (local_pos.y == local_max_pos.y - 1) {
+    int4 offset = {0, +1, 0, 0};
+    local_lookup[get_local_id(0) + 1][get_local_id(1) + 1 + 1][get_local_id(2) + 1] = is_event(read_imagei(reference_volume, smp, location + offset).x);
+  }
+
+  if (local_pos.z == 0) {
+    int4 offset = {0, 0, -1, 0};
+    local_lookup[get_local_id(0) + 1][get_local_id(1) + 1][get_local_id(2) + 1 - 1] = is_event(read_imagei(reference_volume, smp, location + offset).x);
+  }
+  if (local_pos.z == local_max_pos.z - 1) {
+    int4 offset = {0, 0, +1, 0};
+    local_lookup[get_local_id(0) + 1][get_local_id(1) + 1][get_local_id(2) + 1 + 1] = is_event(read_imagei(reference_volume, smp, location + offset).x);
+  }
+
+#endif
