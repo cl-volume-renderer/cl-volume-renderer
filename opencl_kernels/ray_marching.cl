@@ -46,6 +46,7 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
       for(int o = 1; o <= dist_count; ++o){
         current_ray = ray_bounce_fake_reflectance(hit_information, normal,random_seed + o, 1.0f/*roughness*/);
         current_ray.origin += normal*2;
+        float atten = fabs(dot(current_ray.direction, normal));
 
         for(int i = 8; i <= 7 + path_length; ++i){
           current_ray = march_to_next_event(current_ray, reference_volume,sdf, &ray_event, &current_color);
@@ -53,8 +54,6 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
             float factor = 8.0/i;
 
             uint4 light_map = sample_environment_map(current_ray, environment_map);
-            float atten = 1.0f;
-            atten *= fabs(dot(current_ray.direction, normal));
 
             buffer_value.x += atten*r_energy*light_map.x*factor/information_dev;
             buffer_value.y += atten*g_energy*light_map.y*factor/information_dev;
@@ -64,6 +63,7 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
             const float3 normal = -normalize(gradient_prewitt_nn(reference_volume, make_float4(current_ray.origin,0)));
             current_ray = ray_bounce_fake_reflectance(current_ray, normal,random_seed + o + i, 1.0f/*roughness*/);
             current_ray.origin += normal*2;
+            atten *= fabs(dot(current_ray.direction, normal));
 
             r_energy *= (float)current_color.x / 255.0f;
             g_energy *= (float)current_color.y / 255.0f;
@@ -83,7 +83,7 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
   buffer_value /= buffer_value.w;
   float4 f = {buffer_value.x, buffer_value.y, buffer_value.z, 0};
   const float inv_gamma = 1.0f/1.77777777f;
-  const float brightness = 2.0f;
+  const float brightness = 4.0f;
   f = f / 255.0f;
   f.x = pow(f.x * brightness, inv_gamma);
   f.y = pow(f.y * brightness, inv_gamma);
