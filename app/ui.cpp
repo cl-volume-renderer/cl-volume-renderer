@@ -156,7 +156,7 @@ _create_tf(GLint tftexture, frame_emitter *emitter)
 }
 
 void ui::flush_tf(frame_emitter *emitter, Volume_Stats stats, std::vector<tf_selection*> selection) {
-  std::string cl_code = "inline bool is_event_gen(short value, short gradient){\n";
+  std::string cl_code = "inline bool is_event_gen(short value, short gradient, int4 *color){\n";
   for(auto selection : selection) {
     cl_code += selection->create_cl_condition(stats);
   }

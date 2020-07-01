@@ -118,7 +118,8 @@ enum event{
 };
 
 inline bool is_event(short value){
-  return is_event_gen(value, 0.0);
+  int4 color;
+  return is_event_gen(value, 0.0, &color);
   /*
   if(value > 800)
     return true;
