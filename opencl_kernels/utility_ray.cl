@@ -131,8 +131,8 @@ inline enum event get_event_and_value(__read_only image3d_t reference_volume, fl
     return Exit_volume;
 
   const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
-  *value_at_event = read_imagei(reference_volume, smp, position);
-  if(is_event(value_at_event->x))
+  //*value_at_event = read_imagei(reference_volume, smp, position);
+  if(is_event_gen(read_imagei(reference_volume, smp, position).x,0.0f, value_at_event))
     return Hit;
   return None;
 }
@@ -151,11 +151,11 @@ struct ray march(struct ray current_ray, __read_only image3d_t sdf){
   return return_ray;
 }
 
-struct ray march_to_next_event(struct ray current_ray, __read_only image3d_t reference_volume, __read_only image3d_t sdf, enum event *event_type){
+struct ray march_to_next_event(struct ray current_ray, __read_only image3d_t reference_volume, __read_only image3d_t sdf, enum event *event_type, int4 *value_at_event){
   enum event internal_event = None;
   for(int i = 0; i < 70; ++i){
     current_ray = march(current_ray, sdf);
-    internal_event = get_event(reference_volume, make_float4(current_ray.origin,0));
+    internal_event = get_event_and_value(reference_volume, make_float4(current_ray.origin,0), value_at_event);
     if(internal_event != None){
       break;
     }
