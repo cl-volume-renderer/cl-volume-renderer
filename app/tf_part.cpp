@@ -15,13 +15,13 @@ tf_rect_selection::tf_rect_selection(uint id,
    color[3] = 255;
 }
 
-void tf_rect_selection::render_ui(ImVec2 position, ImVec2 size) {
+void tf_rect_selection::render_ui(ImVec2 position, ImVec2 size, Volume_Stats stats) {
    ImGui::PushID(id);
    if (ImGui::CollapsingHeader("Rect:", id)) {
-     ImGui::SliderFloat("Min Value", &min_v, 0.0, 1.0);
-     ImGui::SliderFloat("Max Value", &max_v, 0.0, 1.0);
-     ImGui::SliderFloat("Min Gradient", &min_g, 0.0, 1.0);
-     ImGui::SliderFloat("Max Gradient", &max_g, 0.0, 1.0);
+     ImGui::SliderFloat("Min Value", &min_v, stats.min_v, stats.max_v);
+     ImGui::SliderFloat("Max Value", &max_v, stats.min_v, stats.max_v);
+     ImGui::SliderFloat("Min Gradient", &min_g, stats.min_g, stats.max_g);
+     ImGui::SliderFloat("Max Gradient", &max_g, stats.min_g, stats.max_g);
      ImGui::ColorEdit4("Color", color);
    }
    ImGui::PopID();
@@ -31,8 +31,15 @@ void tf_rect_selection::render_ui(ImVec2 position, ImVec2 size) {
    min_g = std::min(min_g, max_g);
    max_g = std::max(max_g, min_g);
 
-   ImVec2 rposition = {min_v*size.x, min_g*size.y};
-   ImVec2 rsize = {(max_v - min_v)*size.x, (max_g - min_g)*size.y};
+   float v_distance = (stats.max_v - stats.min_v);
+   float g_distance = (stats.max_g - stats.min_g);
+   float tmp_min_v = (min_v - stats.min_v)/v_distance;
+   float tmp_max_v = (max_v - stats.min_v)/v_distance;
+   float tmp_min_g = (min_g - stats.min_g)/g_distance;
+   float tmp_max_g = (max_g - stats.min_g)/g_distance;
+
+   ImVec2 rposition = {tmp_min_v*size.x, tmp_min_g*size.y};
+   ImVec2 rsize = {(tmp_max_v - tmp_min_v)*size.x, (tmp_max_g - tmp_min_g)*size.y};
 
    position.x += rposition.x;
    position.y += (size.y - rposition.y) - rsize.y;
@@ -51,9 +58,9 @@ std::string tf_rect_selection::create_cl_condition(Volume_Stats stats) {
    */
   std::ostringstream cl_code;
   cl_code << "  if(value >= ";
-  cl_code << stats.min_v + (min_v)*(stats.max_v - stats.min_v);
+  cl_code << min_v;
   cl_code << " && value <= ";
-  cl_code << stats.min_v + (max_v)*(stats.max_v - stats.min_v);
+  cl_code << max_v;
   /*cl_code << " && gradient > ";
   cl_code << stats.min_g + (min_g)*(stats.max_g - stats.min_g);
   cl_code << " && gradient < ";
@@ -78,7 +85,7 @@ tf_circle_segment_selection::tf_circle_segment_selection(uint id,
    color[3] = 255;
 }
 
-void tf_circle_segment_selection::render_ui(ImVec2 position, ImVec2 size) {
+void tf_circle_segment_selection::render_ui(ImVec2 position, ImVec2 size, Volume_Stats stats) {
   ImGui::PushID(id);
   if (ImGui::CollapsingHeader("Circle Segment(%d):", id)) {
     ImGui::SliderFloat("Point v", &point_v, 0.0, 1.0);
