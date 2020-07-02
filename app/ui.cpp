@@ -187,8 +187,7 @@ void ui::run(frame_emitter *emitter) {
     image em = iloader.load_file(env_map_path);
     env_map emap(ctx, em);
     emitter->image_set(&rv, &emap);
-    const float goal = 800.0f;
-    imgui_ui_state.selection.push_back(new tf_rect_selection(0, (goal - (float)rv.get_value_range()[0])/(float)(rv.get_value_range()[1] - rv.get_value_range()[0]), 1.0f, 0.0f, 1.0f));
+    imgui_ui_state.selection.push_back(new tf_rect_selection(0, 500.f, 1200.f, 0.0f, 4000.f));
     flush_tf(emitter, rv.get_volume_stats(), imgui_ui_state.selection);
     emitter->flush_changes();
 
@@ -230,7 +229,7 @@ void ui::run(frame_emitter *emitter) {
         ImVec2 size = {(float)tf_size[0], (float)tf_size[1]};
 
         for (auto selection : imgui_ui_state.selection) {
-          selection->render_ui(pos, size);
+          selection->render_ui(pos, size, rv.get_volume_stats());
           ImGui::Separator();
         }
 
