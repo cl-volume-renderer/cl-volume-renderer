@@ -41,6 +41,14 @@ class reference_volume {
                          value_range({0, 0}),
                          gradient_range({0, 0}) {
       TIME_START();
+      //{
+      //  clw_image<short> buffer(ctx, std::vector<short> (b->m_voxel_size_x*b->m_voxel_count_y*b->m_voxel_count_z, 0), volume_size, false);
+      //  auto bilateral_filter = clw_function(ctx, "volume_filter.cl", "bilateral_filter");
+      //  bilateral_filter.execute(get_volume_size_evenness(8),{4,4,4}, volume, buffer);
+      //  volume = std::move(buffer);//Doesn't work, because the reference_volume is const
+      //}
+
+
       //fetch stats
       std::vector<int> stats_buffer {
         std::numeric_limits<int>::max(),
