@@ -17,7 +17,7 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
   const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
   const int3 reference_dimensions = {get_image_width(reference_volume), get_image_height(reference_volume), get_image_depth(reference_volume)};
 
-  float hit_accumulator = 0.0;
+  float hit_accumulator = 0.0f;
 
   struct ray current_ray = surface_ray;
   int4 current_color = {0,0,0,0};
@@ -51,7 +51,7 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
         for(int i = 8; i <= 7 + path_length; ++i){
           current_ray = march_to_next_event(current_ray, reference_volume,sdf, &ray_event, &current_color);
           if(ray_event == Exit_volume){
-            float factor = 8.0/i;
+            float factor = 8.0f/i;
 
             uint4 light_map = sample_environment_map(current_ray, environment_map);
 
@@ -75,7 +75,7 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
       atomic_buffer_volume_add4f(reference_dimensions, buffer_volume, make_float4(hit_information.origin, 0), buffer_value);
     }
   }else{
-    return 0.0;
+    return 0.0f;
   }
 
   buffer_value = buffer_volume_read4f(reference_dimensions, buffer_volume, make_float4(hit_information.origin,0));
@@ -104,7 +104,7 @@ uint4 compute_ao(struct ray surface_ray, __read_only image3d_t reference_volume,
   const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
   const int3 reference_dimensions = {get_image_width(reference_volume), get_image_height(reference_volume), get_image_depth(reference_volume)};
 
-  float hit_accumulator = 0.0;
+  float hit_accumulator = 0.0f;
 
   struct ray current_ray = surface_ray;
   struct ray hit_information = {0};
@@ -137,7 +137,7 @@ uint4 compute_ao(struct ray surface_ray, __read_only image3d_t reference_volume,
       buffer_volume_writef(reference_dimensions, buffer_volume, make_float4(hit_information.origin, 0), buffer_value);
     }
   }else{
-    return 0.0;
+    return 0.0f;
   }
 
 
