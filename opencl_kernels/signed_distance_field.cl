@@ -5,6 +5,9 @@
 __kernel void create_base_image(__read_only image3d_t reference_volume, __write_only image3d_t sdf_image_ping, __write_only image3d_t sdf_image_pong, uint max_iterations){
   int4 location = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
   int4 reference_size = get_image_dim(reference_volume);
+  int4 tmp_for_minus_ones = {-1, -1, -1, -1};
+  int4 max_coords = reference_size + tmp_for_minus_ones;
+  int4 min_coords = {0, 0, 0, 0};
 
   int4 value = read_imagei(reference_volume, location);
   int resulting_value = 0;
@@ -25,9 +28,7 @@ __kernel void create_base_image(__read_only image3d_t reference_volume, __write_
       for (int z = -1; z < 2; z++) {
         if (x != 0 && y != 0 && z != 0) {
           int4 offset = {x, y, z, 0};
-          int4 relative_pos = offset + location;
-          if (relative_pos.x < 0 || relative_pos.y < 0 || relative_pos.z < 0 || relative_pos.x >= reference_size.x || relative_pos.y >= reference_size.y || relative_pos.z >= reference_size.z)
-            continue;
+          int4 relative_pos = clamp(offset + location, min_coords, max_coords);
           int4 neightbour_value = read_imagei(reference_volume, relative_pos);
           if (is_event(neightbour_value.x) != is_event_result) {
             homogenous_neightbourhood = false;
@@ -54,25 +55,21 @@ neightbour_distance_calc(__read_only image3d_t sdf_image, int4 pos) {
   int abs_added_distance = 0;
   int added_distance = 0;
   int4 reference_size = get_image_dim(sdf_image);
+  int4 tmp_for_minus_ones = {-1, -1, -1, -1};
+  int4 max_coords = reference_size + tmp_for_minus_ones;
+  int4 min_coords = {0, 0, 0, 0};
 
   for(int x = -1; x < 2; x++) {
     for(int y = -1; y < 2; y++) {
       for(int z = -1; z < 2; z++) {
         if (x != 0 && y != 0 && z != 0) {
           int4 offset = {x, y, z, 0};
-          int4 relative_pos = offset + pos;
-          if (relative_pos.x < 0 || relative_pos.y < 0 || relative_pos.z < 0 || relative_pos.x >= reference_size.x || relative_pos.y >= reference_size.y || relative_pos.z >= reference_size.z)
-            continue;
+          int4 relative_pos = clamp(offset + pos, min_coords, max_coords);
           int4 value = read_imagei(sdf_image, relative_pos);
           char tmp = (char) abs(value.x);
           abs_added_distance += tmp;
           added_distance += value.x;
-
-          /* this here is needed because we are walking exactly 1 pixel outside our reference volume at the max and min of each axis here
-           * Based on the knowledge how step 1 did init the sdf, we know that the value 0 cannot be the case.
-           * This one branche here was benchmarked against a branch for checking if we are inside the volume, the current solution was faster */
-          if (tmp > 0)
-            neightbour_distance = min(neightbour_distance, (char)(tmp));
+          neightbour_distance = min(neightbour_distance, (char)(tmp));
         }
       }
     }
