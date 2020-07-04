@@ -166,7 +166,8 @@ void ui::flush_tf(frame_emitter *emitter, Volume_Stats stats, std::vector<tf_sel
 }
 
 void ui::run(frame_emitter *emitter) {
-
+    std::array<int, 3> min = {0, 0, 0};
+    std::array<int, 3> max;
     char file_path[1024];
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     bool done = false;
@@ -182,6 +183,7 @@ void ui::run(frame_emitter *emitter) {
     reference_volume rv(ctx, &v);
     rv.set_value_clip({-2000, 3000});
     rv.set_gradient_clip({0, 4000});
+    max = {(int)rv.get_volume_size()[0], (int)rv.get_volume_size()[1], (int)rv.get_volume_size()[2]};
 
     hdre_loader iloader;
     image em = iloader.load_file(env_map_path);
@@ -246,6 +248,29 @@ void ui::run(frame_emitter *emitter) {
           flush_tf(emitter, rv.get_volume_stats(), imgui_ui_state.selection);
           emitter->flush_changes();
           state.path_changed = true;
+        }
+        ImGui::End();
+
+        ImGui::Begin("Clip Volume");
+        ImGui::SliderInt("Min X", &min[0], 0, rv.get_volume_size()[0]);
+        ImGui::SliderInt("Min Y", &min[1], 0, rv.get_volume_size()[1]);
+        ImGui::SliderInt("Min Z", &min[2], 0, rv.get_volume_size()[2]);
+        ImGui::SliderInt("Max X", &max[0], 0, rv.get_volume_size()[0]);
+        ImGui::SliderInt("Max Y", &max[1], 0, rv.get_volume_size()[1]);
+        ImGui::SliderInt("Max Z", &max[2], 0, rv.get_volume_size()[2]);
+
+        min[0] = std::min(min[0], max[0]);
+        min[1] = std::min(min[1], max[1]);
+        min[2] = std::min(min[2], max[2]);
+
+        if (ImGui::Button("Flush Caches & All")) {
+          std::array<size_t, 3> pmin = {(size_t)min[0], (size_t)min[1], (size_t)min[2]};
+          std::array<size_t, 3> pmax = {(size_t)max[0], (size_t)max[1], (size_t)max[2]};
+          rv.set_clipping(pmin, pmax);
+          flush_tf(emitter, rv.get_volume_stats(), imgui_ui_state.selection);
+          emitter->flush_changes();
+          state.path_changed = true;
+
         }
         ImGui::End();
 

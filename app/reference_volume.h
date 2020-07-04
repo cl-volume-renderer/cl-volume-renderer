@@ -28,16 +28,23 @@ struct Volume_Stats{
 
 class reference_volume {
   private:
+    clw_context &ctx;
     std::array<size_t, 3> volume_size;
-    clw_image<const short> volume; //image data input in 3D
+    std::array<size_t, 3> cropped_volume_size;
+    std::array<size_t, 3>clip_min, clip_max;
+    clw_image<short> original_volume; //image data input in 3D, uncropped
+    clw_image<short> cropped_volume; //image data cropped from original volume
     std::array<int, 2> value_range;
     std::array<int, 2> gradient_range;
     std::array<int, 2> value_clip = {std::numeric_limits<int>::min(), std::numeric_limits<int>::max()};
     std::array<int, 2> gradient_clip = {std::numeric_limits<int>::min(), std::numeric_limits<int>::max()};
   public:
-    reference_volume(clw_context &ctx, volume_block *b) :
+    reference_volume(clw_context &c, volume_block *b) :
+                         ctx(c),
                          volume_size({(unsigned int)b->m_voxel_count_x, (unsigned int)b->m_voxel_count_y, (unsigned int)b->m_voxel_count_z}),
-                         volume(ctx, std::move(b->m_voxels), volume_size, true),
+                         cropped_volume_size(volume_size),
+                         original_volume(ctx, std::move(b->m_voxels), volume_size, true),
+                         cropped_volume(ctx, std::vector<short>(8), {2, 2, 2}, false),
                          value_range({0, 0}),
                          gradient_range({0, 0}) {
       TIME_START();
@@ -61,7 +68,7 @@ class reference_volume {
       auto tf_min_max_construction = clw_function(ctx, "reference_volume_figures.cl", "fetch_stats");
       tf_min_max_construction.execute(
         get_volume_size_evenness(8),
-        {4,4,4}, volume,
+        {4,4,4}, original_volume,
         stats);
       stats.pull();
 
@@ -81,6 +88,21 @@ class reference_volume {
       gradient_clip = clip;
     }
 
+    void set_clipping(std::array<size_t, 3> min, std::array<size_t, 3> max) {
+      clip_min = min;
+      clip_max = max;
+      assert(clip_min[0] < clip_max[0]);
+      assert(clip_min[1] < clip_max[1]);
+      assert(clip_min[2] < clip_max[2]);
+      cropped_volume_size = {clip_max[0] - clip_min[0], clip_max[1] - clip_min[1], clip_max[2] - clip_min[2]};
+      clw_vector<unsigned int> start(ctx, std::vector<unsigned int>({(unsigned int)clip_min[0], (unsigned int)clip_min[1], (unsigned int)clip_min[2]}), true);
+      clw_vector<unsigned int> length(ctx, std::vector<unsigned int>({(unsigned int)(clip_max[0] - clip_min[0]), (unsigned int)(clip_max[1] - clip_min[1]), (unsigned int)(clip_max[2] - clip_min[2]), 4}), true);
+      auto copy_func = clw_function(ctx, "reference_volume_clip.cl", "apply_clip");
+      cropped_volume = clw_image<short>(ctx, std::vector<short>(get_volume_length()), get_volume_size());
+
+      copy_func.execute(get_volume_size_evenness(4), {4, 4, 4}, original_volume, cropped_volume, start, length);
+    }
+
     std::array<int, 2> get_value_range() const {
       return {std::max(value_clip[0], value_range[0]), std::min(value_clip[1], value_range[1])};
     }
@@ -88,20 +110,25 @@ class reference_volume {
     std::array<int, 2> get_gradient_range() const {
       return {std::max(gradient_clip[0], gradient_range[0]), std::min(gradient_clip[1], gradient_range[1])};
     }
-
-    const std::array<size_t, 3>& get_volume_size() const {
+    const std::array<size_t, 3>& get_original_volume_size() const {
       return volume_size;
+    }
+    const std::array<size_t, 3>& get_volume_size() const {
+      return cropped_volume_size;
     }
 
     std::array<size_t, 3> get_volume_size_evenness(unsigned int l) const{
-      return {evenness(volume_size[0], l), evenness(volume_size[1], l), evenness(volume_size[2], l)};
+      return {evenness(cropped_volume_size[0], l), evenness(cropped_volume_size[1], l), evenness(cropped_volume_size[2], l)};
     }
 
     size_t get_volume_length() const {
-      return volume_size[0] * volume_size[1] * volume_size[2];
+      return cropped_volume_size[0] * cropped_volume_size[1] * cropped_volume_size[2];
     }
-    const clw_image<const short>& get_reference_volume() const {
-      return volume;
+    const clw_image<short>& get_reference_volume() const {
+      if (cropped_volume.size() > 8)
+        return cropped_volume;
+      else
+        return original_volume;
     }
     Volume_Stats get_volume_stats()  const {
       return Volume_Stats(get_value_range(), get_gradient_range());

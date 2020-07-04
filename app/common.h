@@ -56,7 +56,7 @@ struct Position3D {
    }
 };
 
-inline unsigned long
+inline unsigned int
 evenness(const unsigned int g, const unsigned int l)
 {
    unsigned int mod = g % l;
