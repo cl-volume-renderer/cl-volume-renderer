@@ -15,7 +15,7 @@ int main(int argc, char const *argv[])
   for (int i = 0; i < 100; ++i)
     {
        TIME_START();
-       signed_distance_field(ctx, rv, "inline bool is_event_gen(short value, short gradient){ return (value > 800); }");
+       signed_distance_field(ctx, rv, "inline bool is_event_gen(short value, short gradient, uint4 *color){ return (value > 800); }");
        TIME_PRINT("Loop Iteration");
     }
 
