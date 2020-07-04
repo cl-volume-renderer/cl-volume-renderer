@@ -1,5 +1,6 @@
 #include <signed_distance_field.h>
 #include <nrrd_loader.h>
+#include "debug_helper.h"
 
 int main(int argc, char const *argv[])
 {

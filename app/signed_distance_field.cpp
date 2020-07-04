@@ -1,5 +1,8 @@
 #include "signed_distance_field.h"
 #include "debug_helper.h"
+#include <algorithm>
+#include <clw_vector.h>
+#include <clw_function.h>
 
 signed_distance_field::signed_distance_field(clw_context &c, const reference_volume &rv, std::string local_cl_code) :
   sdf(c, std::move(std::vector<char>(rv.get_volume_length())), rv.get_volume_size(), true) {
