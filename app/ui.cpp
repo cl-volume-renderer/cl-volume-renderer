@@ -252,12 +252,12 @@ void ui::run(frame_emitter *emitter) {
         ImGui::End();
 
         ImGui::Begin("Clip Volume");
-        ImGui::SliderInt("Min X", &min[0], 0, rv.get_volume_size()[0]);
-        ImGui::SliderInt("Min Y", &min[1], 0, rv.get_volume_size()[1]);
-        ImGui::SliderInt("Min Z", &min[2], 0, rv.get_volume_size()[2]);
-        ImGui::SliderInt("Max X", &max[0], 0, rv.get_volume_size()[0]);
-        ImGui::SliderInt("Max Y", &max[1], 0, rv.get_volume_size()[1]);
-        ImGui::SliderInt("Max Z", &max[2], 0, rv.get_volume_size()[2]);
+        ImGui::SliderInt("Min X", &min[0], 0, rv.get_original_volume_size()[0]);
+        ImGui::SliderInt("Min Y", &min[1], 0, rv.get_original_volume_size()[1]);
+        ImGui::SliderInt("Min Z", &min[2], 0, rv.get_original_volume_size()[2]);
+        ImGui::SliderInt("Max X", &max[0], 0, rv.get_original_volume_size()[0]);
+        ImGui::SliderInt("Max Y", &max[1], 0, rv.get_original_volume_size()[1]);
+        ImGui::SliderInt("Max Z", &max[2], 0, rv.get_original_volume_size()[2]);
 
         min[0] = std::min(min[0], max[0]);
         min[1] = std::min(min[1], max[1]);
