@@ -30,9 +30,8 @@ __kernel void create_base_image(__read_only image3d_t reference_volume, __write_
           int4 offset = {x, y, z, 0};
           int4 relative_pos = clamp(offset + location, min_coords, max_coords);
           int4 neightbour_value = read_imagei(reference_volume, relative_pos);
-          if (is_event(neightbour_value.x) != is_event_result) {
-            homogenous_neightbourhood = false;
-          }
+          bool neightbour_event = is_event(neightbour_value.x);
+          homogenous_neightbourhood = homogenous_neightbourhood & (neightbour_event == is_event_result);
         }
       }
     }
