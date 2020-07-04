@@ -9,10 +9,10 @@ tf_rect_selection::tf_rect_selection(uint id,
   float min_v, float max_v,
   float min_g, float max_g) : id(id*100), min_v(min_v), max_v(max_v), min_g(min_g), max_g(max_g)
 {
-   color[0] = 255;
+   color[0] = 1.0;
    color[1] = 0;
    color[2] = 0;
-   color[3] = 255;
+   color[3] = 1.0;
 }
 
 void tf_rect_selection::render_ui(ImVec2 position, ImVec2 size, Volume_Stats stats) {
@@ -67,7 +67,7 @@ std::string tf_rect_selection::create_cl_condition(Volume_Stats stats) {
   cl_code << stats.min_g + (max_g)*(stats.max_g - stats.min_g);*/
   cl_code << ")\n";
   cl_code << " {\n";
-  cl_code << "    int4 tmp_color = {" << color[0] << "," << color[1]  << "," << color[2] << "," << color[3] << "};\n";
+  cl_code << "    int4 tmp_color = {" << (int)(color[0]*255) << "," << (int)(color[1] *255) << "," << (int)(color[2]*255) << "," << (int)color[3]*255 << "};\n";
   cl_code << "    *color = tmp_color;\n";
   cl_code << "    return true;\n";
   cl_code << " }\n";
@@ -80,9 +80,9 @@ tf_circle_segment_selection::tf_circle_segment_selection(uint id,
     point_v(point_v), point_g(point_g), radius(radius), degree(degree)
 {
    color[0] = 0;
-   color[1] = 255;
+   color[1] = 1.0;
    color[2] = 0;
-   color[3] = 255;
+   color[3] = 1.0;
 }
 
 void tf_circle_segment_selection::render_ui(ImVec2 position, ImVec2 size, Volume_Stats stats) {
