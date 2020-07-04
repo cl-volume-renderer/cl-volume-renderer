@@ -88,7 +88,14 @@ class clw_function{
       //Failed, print the error log
       std::cout << "Kernel failed to compile:\n";
       std::array<char, 4096> buffer;
-      error = clGetProgramBuildInfo(m_program, m_context->get_cl_device_id(), CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer.data(), NULL);
+      size_t len;
+      error = clGetProgramBuildInfo(m_program, m_context->get_cl_device_id(), CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer.data(), &len);
+      //The code below looks really weird, but nvidia sometimes prefixes error messages with \0 however, the len is indicating that there is an error, with this we can at least get a piece of the compiler message.
+      if (buffer[0] == '\0' && len > 1)
+        {
+          buffer[0] = ' ';
+          buffer[len - 1] = '\0';
+        }
       std::cout << "---------------------------------------\n";
       std::cout << "\033[1;33m" << buffer.data() << "\033[0m" << '\n';
       std::cout << "---------------------------------------\n";
