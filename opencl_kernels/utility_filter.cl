@@ -1,6 +1,6 @@
 float3 gradient_prewitt_nn(__read_only image3d_t reference_volume, float4 position){
   const float4 p = position;
-  const sampler_t sampler = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
+  const sampler_t sampler = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
   const float4 x = {1,0,0,0};
   const float4 y = {0,1,0,0};
   const float4 z = {0,0,1,0};
@@ -36,7 +36,7 @@ float3 gradient_prewitt_nn(__read_only image3d_t reference_volume, float4 positi
 
 short bilateral_kernel(__read_only image3d_t reference_volume, float4 position){
   const float4 p = position;
-  const sampler_t sampler = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
+  const sampler_t sampler = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
 
   const float sigma = 2;
 	const int radius = 2;

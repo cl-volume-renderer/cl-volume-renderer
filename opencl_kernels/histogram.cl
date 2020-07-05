@@ -4,7 +4,7 @@
 __kernel void tf_sort_values(__read_only image3d_t reference_volume, __global uint *frame,
   int width, int height, float min_value, float max_value, float min_gradient, float max_gradient)
 {
-   const sampler_t smp = CLK_FILTER_NEAREST;
+   const sampler_t smp = CLK_FILTER_LINEAR;
 
   float4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
   int ref_value = read_imagei(reference_volume, smp, pos).x;
@@ -33,7 +33,7 @@ __kernel void tf_sort_values(__read_only image3d_t reference_volume, __global ui
 __kernel void tf_flush_color_frame(__write_only image2d_t color_frame,
   __global int *frame, __global int *lookup, int lookup_len)
 {
-   const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
+   const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
 
   int2 pos = {get_global_id(0), get_global_id(1)};
   int2 frame_size = get_image_dim(color_frame);

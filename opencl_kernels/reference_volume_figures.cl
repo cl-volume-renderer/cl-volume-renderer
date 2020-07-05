@@ -9,7 +9,7 @@
 
 __kernel void fetch_stats(__read_only image3d_t reference_volume, __global int *stats)
 {
-  const sampler_t smp = CLK_FILTER_NEAREST;
+  const sampler_t smp = CLK_FILTER_LINEAR;
 
   float4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
   int ref_value = read_imagei(reference_volume, smp, pos).x;

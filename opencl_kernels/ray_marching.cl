@@ -14,7 +14,7 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
   int dist_count = 2;
   int path_length = 3;
 
-  const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
+  const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
   const int3 reference_dimensions = {get_image_width(reference_volume), get_image_height(reference_volume), get_image_depth(reference_volume)};
 
   float hit_accumulator = 0.0f;
@@ -101,7 +101,7 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
 
 //Expect the surface ray as entry point
 uint4 compute_ao(struct ray surface_ray, __read_only image3d_t reference_volume, __read_only image3d_t sdf, __global unsigned short* buffer_volume, int random_seed){
-  const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
+  const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
   const int3 reference_dimensions = {get_image_width(reference_volume), get_image_height(reference_volume), get_image_depth(reference_volume)};
 
   float hit_accumulator = 0.0f;

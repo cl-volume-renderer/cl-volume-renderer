@@ -4,7 +4,7 @@ float gauss(float a, float sigma){
 
 __kernel void bilateral_filter(__read_write image2d_t frame, int kernel_size, float sigma){
   const int2 pos = {get_global_id(0),get_global_id(1)};
-  const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
+  const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
   const uint4 ref_colour = read_imageui(frame, smp, pos);
 
   float Wpr = 0.0f;

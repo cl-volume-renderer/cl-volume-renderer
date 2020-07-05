@@ -130,7 +130,7 @@ inline enum event get_event_and_value(__read_only image3d_t reference_volume, fl
   if(exited_volume(reference_volume, position))
     return Exit_volume;
 
-  const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
+  const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
   //*value_at_event = read_imagei(reference_volume, smp, position);
   if(is_event_gen(read_imagei(reference_volume, smp, position).x,0.0f, value_at_event))
     return Hit;
@@ -144,7 +144,7 @@ inline enum event get_event(__read_only image3d_t reference_volume, float4 posit
 }
 
 struct ray march(struct ray current_ray, __read_only image3d_t sdf){
-  const sampler_t smp = CLK_FILTER_NEAREST | CLK_ADDRESS_CLAMP;
+  const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
   float signed_distance = read_imagei(sdf, smp, make_int(make_float4(current_ray.origin,0))).x;
   float step_size = max(signed_distance, 0.5f);//Choose this dyn. later
   const struct ray return_ray = {current_ray.origin + step_size*current_ray.direction, current_ray.direction};
