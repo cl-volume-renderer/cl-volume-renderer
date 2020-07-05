@@ -21,4 +21,4 @@ stb = stb_proj.get_variable('stb_dep')
 
 subdir('opencl_wrapper')
 subdir('app')
-
+subdir('tests' / 'sdf')
