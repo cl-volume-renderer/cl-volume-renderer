@@ -39,6 +39,8 @@ class reference_volume {
     void set_value_clip(std::array<int, 2> clip);
     void set_gradient_clip(std::array<int, 2> clip);
     void set_clipping(std::array<size_t, 3> min, std::array<size_t, 3> max);
+    ///Applies a filter (smoothing) to the reference volume or cropped reference volume
+    void filter();
     std::array<int, 2> get_value_range() const;
     std::array<int, 2> get_gradient_range() const;
     const std::array<size_t, 3>& get_original_volume_size() const;

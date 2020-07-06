@@ -19,12 +19,7 @@ reference_volume::reference_volume(clw_context &c, volume_block *b) :
                      value_range({0, 0}),
                      gradient_range({0, 0}) {
   TIME_START();
-  //{
-  //  clw_image<short> buffer(ctx, std::vector<short> (b->m_voxel_size_x*b->m_voxel_count_y*b->m_voxel_count_z, 0), volume_size, false);
-  //  auto bilateral_filter = clw_function(ctx, "volume_filter.cl", "bilateral_filter");
-  //  bilateral_filter.execute(get_volume_size_evenness(8),{4,4,4}, volume, buffer);
-  //  volume = std::move(buffer);//Doesn't work, because the reference_volume is const
-  //}
+  
 
 
   //fetch stats
@@ -72,6 +67,19 @@ void reference_volume::set_clipping(std::array<size_t, 3> min, std::array<size_t
   cropped_volume = clw_image<short>(ctx, std::vector<short>(get_volume_length()), get_volume_size());
 
   copy_func.execute(get_volume_size_evenness(4), {4, 4, 4}, original_volume, cropped_volume, start, length);
+}
+
+void reference_volume::filter(){
+  TIME_START();
+  clw_image<short>& ref = (cropped_volume.size() > 8) ? cropped_volume : original_volume;
+  {
+    auto dimensions = ref.get_dimensions();
+    clw_image<short> buffer(ctx, std::vector<short> (dimensions[0]*dimensions[1]*dimensions[2], 0), volume_size, false);
+    auto bilateral_filter = clw_function(ctx, "volume_filter.cl", "bilateral_filter");
+    bilateral_filter.execute(get_volume_size_evenness(8),{4,4,4}, ref, buffer);
+    ref = std::move(buffer);//Doesn't work, because the reference_volume is const
+  }
+  TIME_PRINT("apply filter time");
 }
 
 std::array<int, 2> reference_volume::get_value_range() const {

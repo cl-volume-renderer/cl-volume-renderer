@@ -10,6 +10,7 @@
 //including the implementation of the opengl implementation
 #include <imgui_impl_opengl2.cpp>
 #include <imgui_impl_sdl.cpp>
+#include "imgui.h"
 #include "nrrd_loader.h"
 #include "hdre_loader.h"
 #include "clw_context.h"
@@ -166,6 +167,7 @@ void ui::flush_tf(frame_emitter *emitter, Volume_Stats stats, std::vector<tf_sel
 }
 
 void ui::run(frame_emitter *emitter) {
+    bool apply_filter = false;
     std::array<int, 3> min = {0, 0, 0};
     std::array<int, 3> max;
     char file_path[1024];
@@ -251,13 +253,14 @@ void ui::run(frame_emitter *emitter) {
         }
         ImGui::End();
 
-        ImGui::Begin("Clip Volume");
+        ImGui::Begin("Clip Volume & Filtering");
         ImGui::SliderInt("Min X", &min[0], 0, rv.get_original_volume_size()[0]);
         ImGui::SliderInt("Min Y", &min[1], 0, rv.get_original_volume_size()[1]);
         ImGui::SliderInt("Min Z", &min[2], 0, rv.get_original_volume_size()[2]);
         ImGui::SliderInt("Max X", &max[0], 0, rv.get_original_volume_size()[0]);
         ImGui::SliderInt("Max Y", &max[1], 0, rv.get_original_volume_size()[1]);
         ImGui::SliderInt("Max Z", &max[2], 0, rv.get_original_volume_size()[2]);
+        ImGui::Checkbox("Apply Filter", &apply_filter);
 
         min[0] = std::min(min[0], max[0]);
         min[1] = std::min(min[1], max[1]);
@@ -267,10 +270,12 @@ void ui::run(frame_emitter *emitter) {
           std::array<size_t, 3> pmin = {(size_t)min[0], (size_t)min[1], (size_t)min[2]};
           std::array<size_t, 3> pmax = {(size_t)max[0], (size_t)max[1], (size_t)max[2]};
           rv.set_clipping(pmin, pmax);
+          if(apply_filter){
+            rv.filter();
+          }
           flush_tf(emitter, rv.get_volume_stats(), imgui_ui_state.selection);
           emitter->flush_changes();
           state.path_changed = true;
-
         }
         ImGui::End();
 
