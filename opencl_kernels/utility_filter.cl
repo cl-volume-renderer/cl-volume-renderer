@@ -38,7 +38,8 @@ short bilateral_kernel(__read_only image3d_t reference_volume, float4 position){
   const float4 p = position;
   const sampler_t sampler = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
 
-  const float sigma = 2;
+  const float sigmas = 0.6f;//Kernel size 2
+  const float sigmar = 1.0f;
 	const int radius = 2;
 	float out_colour = 0;
 	float mid_colour = read_imagei(reference_volume, sampler, p).x;
@@ -48,13 +49,13 @@ short bilateral_kernel(__read_only image3d_t reference_volume, float4 position){
 		for (int y = -radius; y <= radius; ++y)
 			for (int x = -radius; x <= radius; ++x){
         float local_colour = read_imagei(reference_volume, sampler, p + (float4)(x,y,z,0)).x;
-        float posd = (x*x + y*y + z*z)/(2*sigma*sigma);
-        float cold = (pow(mid_colour - local_colour, 2))/(2*sigma*sigma);
+        float posd = ((float)(x*x + y*y + z*z))/(2*sigmas*sigmas);
+        float cold = (pow((float)(mid_colour - local_colour), 2.0f))/(2*sigmar*sigmar);
         float w = exp(-posd - cold);
         wp += w;
         out_colour += local_colour*w;
 			}
 
-  return out_colour;
+  return out_colour/wp;
 
 }
