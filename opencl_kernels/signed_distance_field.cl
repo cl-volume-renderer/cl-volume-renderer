@@ -89,17 +89,16 @@ __kernel void create_signed_distance_field(__read_only image3d_t sdf_image, __wr
   if (pos.x >= reference_size.x || pos.y >= reference_size.y || pos.z >= reference_size.z || absolut_current_value < iteration)
    return;
 
-  if (absolut_current_value == iteration) {
-    write_imagei(signed_distance_field, pos, local_value);
-    return;
+  if (absolut_current_value > iteration) {
+    char mul = local_value.x < 0 ? -1 : 1;
+    char neightbour_distance = neightbour_distance_calc(sdf_image, pos);
+    // in case our neighbourhood does contain a value from this iteration, then we are setting our own voxel to iteration +1 and multiply with mul to keep the signedness based on our evevnt location.
+    if ((neightbour_distance != 0 && neightbour_distance == iteration)) { //
+      absolut_current_value = (iteration + 1);
+      local_value.x = absolut_current_value * mul;
+    }
   }
-
-  char mul = local_value.x < 0 ? -1 : 1;
-  char neightbour_distance = neightbour_distance_calc(sdf_image, pos);
-
-  // in case our neighbourhood does contain a value from this iteration, then we are setting our own voxel to iteration +1 and multiply with mul to keep the signedness based on our evevnt location.
-  if ((neightbour_distance != 0 && neightbour_distance == iteration)) { //
-    local_value.x = (iteration + 1) * mul;
+  if (absolut_current_value < max_iterations) {
     write_imagei(signed_distance_field, pos, local_value);
     atomic_inc(add_buffer);
   }
