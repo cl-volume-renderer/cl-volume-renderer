@@ -6,7 +6,9 @@ configure_file(
   configuration: test_config,
 )
 
-executable('sdf_test',
+sdf_test = executable('sdf_test',
   ['sdf_test.cpp'],
   dependencies: [app_source],
 )
+
+test('sdf', sdf_test)
