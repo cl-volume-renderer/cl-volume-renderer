@@ -83,15 +83,14 @@ __kernel void create_signed_distance_field(__read_only image3d_t sdf_image, __wr
   int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
   int4 reference_size = get_image_dim(sdf_image);
 
-   if (pos.x >= reference_size.x || pos.y >= reference_size.y || pos.z >= reference_size.z)
-     return;
-
   int4 local_value = read_imagei(sdf_image, pos);
   int absolut_current_value = abs(local_value.x);
 
-  if (absolut_current_value < max_iterations) {
-    if (absolut_current_value == iteration)
-      write_imagei(signed_distance_field, pos, local_value);
+  if (pos.x >= reference_size.x || pos.y >= reference_size.y || pos.z >= reference_size.z || absolut_current_value < iteration)
+   return;
+
+  if (absolut_current_value == iteration) {
+    write_imagei(signed_distance_field, pos, local_value);
     return;
   }
 
