@@ -10,8 +10,8 @@ tf_rect_selection::tf_rect_selection(uint id,
   float min_g, float max_g) : id(id*100), min_v(min_v), max_v(max_v), min_g(min_g), max_g(max_g)
 {
    color[0] = 1.0;
-   color[1] = 0;
-   color[2] = 0;
+   color[1] = 1.0;
+   color[2] = 1.0;
    color[3] = 1.0;
 }
 
