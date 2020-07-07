@@ -14,6 +14,7 @@
 #include "nrrd_loader.h"
 #include "hdre_loader.h"
 #include "clw_context.h"
+#include "common_defines.h"
 
 static const GLubyte emptyData[] = {0, 0, 0, 250};
 
@@ -34,7 +35,7 @@ ui::ui(const char *raw_path, const char *env_map, clw_context &c) : ctx(c) {
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
   SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
   SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
-  window = SDL_CreateWindow("GPGPU - Volume renderer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 2048, 1024, window_flags);
+  window = SDL_CreateWindow("GPGPU - Volume renderer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, window_flags);
   gl_context = SDL_GL_CreateContext(window);
 
   SDL_GL_MakeCurrent(window, gl_context);

@@ -3,9 +3,7 @@
 #include "debug_helper.h"
 #include <cstdlib>
 #include <set>
-
-#define SCREEN_HEIGHT 1024
-#define SCREEN_WIDTH 2048
+#include "common_defines.h"
 
 renderer::renderer(clw_context &c)
 : ctx(c),
