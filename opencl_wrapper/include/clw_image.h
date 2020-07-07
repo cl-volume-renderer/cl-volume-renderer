@@ -11,6 +11,9 @@
 template <typename TDevice, size_t ChannelSize=1>
 class clw_image {
   using TInternal = typename std::remove_const<TDevice>::type;
+  using TInternalConst = typename std::add_const<TInternal>::type;
+  friend class clw_image<TInternalConst, ChannelSize>;
+  friend class clw_image<TInternal, ChannelSize>;
  public:
   constexpr clw_image(const clw_context& context, std::vector<TInternal>&& data, std::array<size_t, 3> dimensions, const bool push_on_construction = false)
       : m_context(&context) {
@@ -144,7 +147,7 @@ class clw_image {
   clw_image(const clw_image& other, const bool push_on_construction = false): clw_image(*other.m_context, std::vector<TInternal>(other.m_host_array),other.m_dimensions,push_on_construction){
   };
   clw_image(clw_image&&) = delete;
-  clw_image& operator=(const clw_image&) = delete;
+  clw_image& operator=(clw_image&) = delete;
   clw_image& operator=(clw_image&& other){
     assert(this != &other); //Moving object into itself... why?
     
@@ -162,6 +165,28 @@ class clw_image {
     other.m_device_array = 0;
     other.m_context = 0;
     return *this;
+  }
+
+  //Allow assignment to other image via-copy. This also allows
+  //assignments like: clw_image<const T> = clw_image<T>;
+  //This function does not push!
+  void host_copy_from(const clw_image<TInternalConst, ChannelSize>& other){
+    if(this->m_dimensions != other.m_dimensions){
+      std::cerr << "Error, dimensions are not compatible.\n";
+      exit(1);
+    }
+    this->m_device_array = other.m_device_array;
+  }
+
+  //Allow assignment to other image via-copy. This also allows
+  //assignments like: clw_image<T> = clw_image<const T>;
+  //This function does not push!
+  void host_copy_from(const clw_image<TInternal, ChannelSize>& other){
+    if(this->m_dimensions != other.m_dimensions){
+      std::cerr << "Error, dimensions are not compatible.\n";
+      exit(1);
+    }
+    this->m_device_array = other.m_device_array;
   }
 
   //Allow access with [] operator
