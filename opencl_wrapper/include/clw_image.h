@@ -164,9 +164,11 @@ class clw_image {
     return *this;
   }
 
+  //Allow access with [] operator
   TInternal& operator[](std::size_t index) { 
     return m_host_array[index];
   }
+  //Allow access with [] operator (for const)
   const TInternal& operator[](std::size_t index) const {
     return m_host_array[index];
   }
