@@ -21,7 +21,7 @@ class clw_vector {
             clCreateBuffer(context.get_cl_context(), CL_MEM_READ_ONLY,
                            m_host_array.size() * sizeof(TDevice), NULL, &error);
       }
-    {
+    else {
       m_device_array =
           clCreateBuffer(context.get_cl_context(), CL_MEM_READ_WRITE,
                          m_host_array.size() * sizeof(TDevice), NULL, &error);
