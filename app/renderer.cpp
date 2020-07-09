@@ -79,16 +79,22 @@ void* renderer::render_tf(const unsigned int height, const unsigned int width)
   }
   frame.push();
 
-  std::vector<int> history_buffer;
-  std::copy(possible_histories.begin(), possible_histories.end(), std::back_inserter(history_buffer));
-  clw_vector<int> history(ctx, std::move(history_buffer));
-  history.push();
 
-  auto tf_frame_flush = clw_function(ctx, "histogram.cl", "tf_flush_color_frame");
-  tf_frame_flush.execute(
-    {evenness(tfframe.get_dimensions()[0], 16), evenness(tfframe.get_dimensions()[1], 16)},
-    {16,16}, tfframe, frame, history, (int)history.size());
+  //TODO Why does this happen on Intel HD Graphics for large volumes?
+  if(possible_histories.size() == 0){
+    std::cout << "Warning, histogram does not contain non-zero entries.\n";
+  }else{
+    std::vector<int> history_buffer;
+    std::copy(possible_histories.begin(), possible_histories.end(), std::back_inserter(history_buffer));
+    clw_vector<int> history(ctx, std::move(history_buffer));
+    history.push();
 
+    auto tf_frame_flush = clw_function(ctx, "histogram.cl", "tf_flush_color_frame");
+    tf_frame_flush.execute(
+      {evenness(tfframe.get_dimensions()[0], 16), evenness(tfframe.get_dimensions()[1], 16)},
+      {16,16}, tfframe, frame, history, (int)history.size());
+
+  }
   TIME_PRINT("Tf render time");
 
   /*
