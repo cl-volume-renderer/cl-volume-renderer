@@ -8,7 +8,7 @@
 renderer::renderer(clw_context &c)
 : ctx(c),
   render_func(ctx, "empty.cl", "empty"),
-  frame(ctx, std::move(std::vector<unsigned char>(SCREEN_WIDTH*SCREEN_HEIGHT*4)), {SCREEN_WIDTH, SCREEN_HEIGHT,1}),
+  frame(ctx, std::vector<unsigned char>(SCREEN_WIDTH*SCREEN_HEIGHT*4), {SCREEN_WIDTH, SCREEN_HEIGHT,1}),
   buffer_volume(ctx, std::vector<unsigned short>(8*4)),
   tfframe(ctx,  std::vector<unsigned char>(2*2*4), {2, 2}),
   sdf(ctx)
