@@ -1,7 +1,7 @@
 #clw_include_once "utility_ray.cl"
 
 uint4 sample_environment_map(struct ray sample_ray, __read_only image2d_t environment_map){
-  const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP | CLK_NORMALIZED_COORDS_TRUE;
+  const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP_TO_EDGE | CLK_NORMALIZED_COORDS_TRUE;
   const float aspect = get_image_width(environment_map)/get_image_height(environment_map);
   const float2 inverse_pi_factor = {0.1591549431f, 0.318309886f};
   const float2 offset = {0.5f, 0.5f};
@@ -12,7 +12,7 @@ uint4 sample_environment_map(struct ray sample_ray, __read_only image2d_t enviro
   return read_colour;
 }
 float4 sample_environment_map_e(struct ray sample_ray, __read_only image2d_t environment_map){
-  const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP | CLK_NORMALIZED_COORDS_TRUE;
+  const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP_TO_EDGE | CLK_NORMALIZED_COORDS_TRUE;
   //const float aspect = get_image_width(environment_map)/get_image_height(environment_map);
   const float2 inverse_pi_factor = {0.318309886f, 0.1591549431f};
   const float2 offset = {0.5f, 0.5f};
