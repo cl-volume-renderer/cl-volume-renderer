@@ -12,12 +12,12 @@ __kernel void fetch_stats(__read_only image3d_t reference_volume, __global int *
   const sampler_t smp = CLK_FILTER_LINEAR;
 
   float4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
-  int ref_value = read_imagei(reference_volume, smp, pos).x;
-  float grad_length = length(gradient_prewitt_nn(reference_volume, pos));
   int4 reference_size = get_image_dim(reference_volume);
-
   if (pos.x >= reference_size.x || pos.y >= reference_size.y || pos.z >= reference_size.z)
     return;
+  int ref_value = read_imagei(reference_volume, smp, pos).x;
+  float grad_length = length(gradient_prewitt_nn(reference_volume, pos));
+
 
   atomic_min(&stats[MIN_VALUE], ref_value);
   atomic_max(&stats[MAX_VALUE], ref_value);
