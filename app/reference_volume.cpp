@@ -74,7 +74,7 @@ void reference_volume::filter(){
   clw_image<short>& ref = (cropped_volume.size() > 8) ? cropped_volume : original_volume;
   {
     auto dimensions = ref.get_dimensions();
-    clw_image<short> buffer(ctx, std::vector<short> (dimensions[0]*dimensions[1]*dimensions[2], 0), volume_size, false);
+    clw_image<short> buffer(ctx, std::vector<short> (get_volume_length(), 0), get_volume_size(), false);
     auto bilateral_filter = clw_function(ctx, "volume_filter.cl", "bilateral_filter");
     bilateral_filter.execute(get_volume_size_evenness(8),{4,4,4}, ref, buffer);
     ref = std::move(buffer);//Doesn't work, because the reference_volume is const
