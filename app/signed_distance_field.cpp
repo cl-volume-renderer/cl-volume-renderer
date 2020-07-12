@@ -7,10 +7,11 @@
 signed_distance_field::signed_distance_field(clw_context &c, const reference_volume &rv, std::string local_cl_code) :
   sdf(c, std::move(std::vector<char>(rv.get_volume_length())), rv.get_volume_size(), true) {
   TIME_START();
+  //this assumes that *at least* there is 1 element in the middle of the longest axis.
   size_t max_iterations = std::min((*std::max_element(rv.get_volume_size().begin(), rv.get_volume_size().end()))/2, (size_t)127);
   auto sdf_pong = clw_image<char>(c, std::vector<char>(rv.get_volume_length()), rv.get_volume_size());
 
-  //first fill the sdf image with -1 for *inside* a interesting area 1 outside a interesting area
+  //first fill the sdf image with -1 for *inside* a interesting area 1 outside a interesting area, and max iteration when the neightbourhood is homogenous
   auto sdf_generation_init = clw_function(c, "signed_distance_field.cl", "create_base_image", local_cl_code);
   sdf_generation_init.execute(rv.get_volume_size_evenness(8), {4,4,4}, rv.get_reference_volume(), sdf, sdf_pong, (unsigned int)max_iterations);
 
@@ -24,6 +25,7 @@ signed_distance_field::signed_distance_field(clw_context &c, const reference_vol
     sdf_generation_initialization.execute(rv.get_volume_size_evenness(8), {4,4,4}, *ping, *pong, i, atomic_add_buffer, (unsigned int)max_iterations);
     std::swap(ping, pong);
     atomic_add_buffer.pull();
+    //only exit when pong is the sdf buffer.
     if (atomic_add_buffer[0] == 0 && i % 2 == 1) {
       break;
     }
