@@ -118,15 +118,6 @@ enum event{
   Exit_volume
 };
 
-inline bool is_event(short value){
-  int4 color;
-  return is_event_gen(value, 0.0, &color);
-  /*
-  if(value > 800)
-    return true;
-  return false;*/
-}
-
 inline enum event get_event_and_value(__read_only image3d_t reference_volume, float4 position, int4* value_at_event){
   if(exited_volume(reference_volume, position))
     return Exit_volume;
