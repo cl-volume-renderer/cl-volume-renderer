@@ -65,6 +65,7 @@ struct cut_result cut(__read_only image3d_t reference_volume, struct ray shot) {
   return res;
 }
 
+//Generates camera rays from camera position
 struct ray generate_ray(struct ray camera, int x, int y, int x_total, int y_total){
   const float3 up = {0.0, 1.0, 0.0};
   const float3 cam_dir  = camera.direction;
@@ -87,6 +88,7 @@ struct ray generate_ray(struct ray camera, int x, int y, int x_total, int y_tota
   return ret;
 }
 
+//Returns true if point is in volume
 bool in_volume(__read_only image3d_t reference_volume, float3 point) {
   int3 refdimensions = {get_image_width(reference_volume), get_image_height(reference_volume), get_image_depth(reference_volume)};
   if (LIMITS(point, x) && LIMITS(point, y) && LIMITS(point, z))
@@ -94,17 +96,19 @@ bool in_volume(__read_only image3d_t reference_volume, float3 point) {
   return false;
 }
 
-
+//Bounces the ray
 struct ray ray_bounce(struct ray current_ray, float3 normal, int seed){
   const struct ray bounced_ray = {current_ray.origin + current_ray.direction, get_hemisphere_direction(normal, seed)};
   return bounced_ray;
 }
 
+//Bounces the ray with a simple "fake" reflectance
 struct ray ray_bounce_fake_reflectance(struct ray current_ray, float3 normal, int seed, float roughness){
   const struct ray bounced_ray = {current_ray.origin + current_ray.direction, get_hemisphere_direction_reflective(normal, seed, roughness)};
   return bounced_ray;
 }
 
+//Returns true if the volume has been exited
 inline bool exited_volume(__read_only image3d_t reference_volume, float4 position){
   const int3 ref_dimensions = {get_image_width(reference_volume), get_image_height(reference_volume), get_image_depth(reference_volume)};
   const bool exited_max = ref_dimensions.x < position.x | ref_dimensions.y < position.y | ref_dimensions.z < position.z;
@@ -118,6 +122,7 @@ enum event{
   Exit_volume
 };
 
+//Returns the event and writes the colour information from TF into value_at_event
 inline enum event get_event_and_value(__read_only image3d_t reference_volume, float4 position, int4* value_at_event){
   if(exited_volume(reference_volume, position))
     return Exit_volume;
@@ -132,12 +137,14 @@ inline enum event get_event_and_value(__read_only image3d_t reference_volume, fl
   return None;
 }
 
+//Same as get_event_and_value but without colour information
 inline enum event get_event(__read_only image3d_t reference_volume, float4 position){
   int4 value_at_event;
   return get_event_and_value(reference_volume, position, &value_at_event);
 
 }
 
+//March the ray one step (using SDF)
 struct ray march(struct ray current_ray, __read_only image3d_t sdf){
   const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
   float signed_distance = read_imagei(sdf, smp, make_int(make_float4(current_ray.origin,0))).x;
@@ -146,6 +153,7 @@ struct ray march(struct ray current_ray, __read_only image3d_t sdf){
   return return_ray;
 }
 
+//Marches to next event, or returns None if max number of steps was performed
 struct ray march_to_next_event(struct ray current_ray, __read_only image3d_t reference_volume, __read_only image3d_t sdf, enum event *event_type, int4 *value_at_event){
   enum event internal_event = None;
   for(int i = 0; i < 70; ++i){

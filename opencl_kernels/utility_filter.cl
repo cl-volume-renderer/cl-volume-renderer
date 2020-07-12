@@ -1,3 +1,4 @@
+//Returns the gradient of a voxel at position "position"
 float3 gradient_prewitt_nn(__read_only image3d_t reference_volume, float4 position){
   const float4 p = position;
   const sampler_t sampler = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
@@ -33,7 +34,7 @@ float3 gradient_prewitt_nn(__read_only image3d_t reference_volume, float4 positi
   return return_float;
 }
 
-
+//Evaluates a bilateral filter at certain position (voxel)
 short bilateral_kernel(__read_only image3d_t reference_volume, float4 position){
   const float4 p = position;
   const sampler_t sampler = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;

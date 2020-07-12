@@ -2,6 +2,7 @@ float gauss(float a, float sigma){
   return a / (2*sigma*sigma);
 }
 
+//Applies a 2D bilateral filter (not tested)
 __kernel void bilateral_filter(__read_write image2d_t frame, int kernel_size, float sigma){
   const int2 pos = {get_global_id(0),get_global_id(1)};
   const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;

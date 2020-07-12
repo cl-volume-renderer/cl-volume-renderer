@@ -6,6 +6,7 @@
 #clw_include_once "utility_environment_map.cl"
 
 
+//Computes the image using "pseudo" raytracing
 uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volume, __read_only image3d_t sdf, __read_only image2d_t environment_map, __global unsigned short* buffer_volume, int random_seed){
 
   //int dist_count = 2 - (random_seed % 2);
@@ -99,7 +100,7 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
  
 }
 
-//Expect the surface ray as entry point
+//Computes AO 
 uint4 compute_ao(struct ray surface_ray, __read_only image3d_t reference_volume, __read_only image3d_t sdf, __global unsigned short* buffer_volume, int random_seed){
   const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
   const int3 reference_dimensions = {get_image_width(reference_volume), get_image_height(reference_volume), get_image_depth(reference_volume)};
@@ -147,6 +148,7 @@ uint4 compute_ao(struct ray surface_ray, __read_only image3d_t reference_volume,
   return return_int*2;
 }
 
+//Main entry point to rendering
 __kernel void render(__write_only image2d_t frame, __read_only image3d_t reference_volume, __read_only image3d_t sdf, __read_only image2d_t environment_map, __global unsigned short* buffer_volume, float cam_pos_x, float cam_pos_y, float cam_pos_z, float cam_dir_x, float cam_dir_y, float cam_dir_z, int random_seed){
   unsigned int x = get_global_id(0);
   unsigned int y = get_global_id(1);
