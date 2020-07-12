@@ -123,11 +123,11 @@ inline enum event get_event_and_value(__read_only image3d_t reference_volume, fl
     return Exit_volume;
 
   const sampler_t smp = CLK_FILTER_LINEAR | CLK_ADDRESS_CLAMP;
-  float3 gradient = gradient_prewitt_nn(reference_volume, position);
+  float gradient = length(gradient_prewitt_nn(reference_volume, position));
   int value = read_imagei(reference_volume, smp, position).x;
 
-  //if(is_event_gen(value, gradient, value_at_event))
-  if(is_event_gen(value, 0.0f, value_at_event))
+  if(is_event_gen(value, gradient, value_at_event))
+  //if(is_event_gen(value, 0.0f, value_at_event))
     return Hit;
   return None;
 }
