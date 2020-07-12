@@ -44,7 +44,7 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
       float b_energy = (float)current_color.z / 255.0f;
 
       for(int o = 1; o <= dist_count; ++o){
-        current_ray = ray_bounce_fake_reflectance(hit_information, normal,random_seed + o, 1.0f/*roughness*/);
+        current_ray = ray_bounce_fake_reflectance(hit_information, normal,random_seed + o, ((float)current_color.w) / 255.0f/*roughness*/);
         current_ray.origin += normal*2;
         float atten = fabs(dot(current_ray.direction, normal));
 
@@ -61,7 +61,7 @@ uint4 compute_light(struct ray surface_ray, __read_only image3d_t reference_volu
             break;
           }else if(ray_event == Hit){
             const float3 normal = -normalize(gradient_prewitt_nn(reference_volume, make_float4(current_ray.origin,0)));
-            current_ray = ray_bounce_fake_reflectance(current_ray, normal,random_seed + o + i, 1.0f/*roughness*/);
+            current_ray = ray_bounce_fake_reflectance(current_ray, normal,random_seed + o + i, ((float)current_color.w) / 255.0f/*roughness*/);
             current_ray.origin += normal*2;
             atten *= fabs(dot(current_ray.direction, normal));
 

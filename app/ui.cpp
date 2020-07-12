@@ -242,7 +242,7 @@ void ui::run(frame_emitter *emitter) {
 
         if (ImGui::Combo("New:", &imgui_ui_state.new_index, items, 2)) {
           if (imgui_ui_state.new_index == 0) {
-            imgui_ui_state.selection.push_back(new tf_rect_selection(imgui_ui_state.selection.size(), 0.0f, 0.1f, 0.0f, 0.1f));
+            imgui_ui_state.selection.push_back(new tf_rect_selection(imgui_ui_state.selection.size(), 0.0f, 1.0f, 0.0f, 4000.0f));
           } else if (imgui_ui_state.new_index == 1) {
             imgui_ui_state.selection.push_back(new tf_circle_segment_selection(imgui_ui_state.selection.size(), 0.0, 0.0, 0.1, 0.1));
           }

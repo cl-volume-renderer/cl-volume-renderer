@@ -71,7 +71,7 @@ std::string tf_rect_selection::create_cl_condition(Volume_Stats stats) {
 
   cl_code << ")\n";
   cl_code << " {\n";
-  cl_code << "    int4 tmp_color = {" << (int)(color[0]*255) << "," << (int)(color[1] *255) << "," << (int)(color[2]*255) << "," << (int)color[3]*255 << "};\n";
+  cl_code << "    int4 tmp_color = {" << (int)(color[0]*255) << "," << (int)(color[1] *255) << "," << (int)(color[2]*255) << "," << (int)(color[3]*255) << "};\n";
   cl_code << "    *color = tmp_color;\n";
   cl_code << "    return true;\n";
   cl_code << " }\n";
