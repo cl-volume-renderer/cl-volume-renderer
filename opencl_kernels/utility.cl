@@ -41,8 +41,34 @@ void atomic_buffer_volume_add4(int3 refdimensions, __global unsigned short *buff
    atomic_add(buffer+1, high);
 }
 
+inline bool allow_write_max(int3 refdimensions, __global unsigned short *buffer_volume, int4 pos, unsigned int max){
+  int idx = (refdimensions.x*refdimensions.z * pos.y + refdimensions.x * pos.z + pos.x)*4;
+  short w = buffer_volume[idx + 3];
+  if(w > max){
+    return false;
+  }
+  buffer_volume[idx + 3] += 1;
+  return true;
+}
+
+bool allow_write_maxf(int3 refdimensions, __global unsigned short *buffer_volume, float4 pos, unsigned int max){
+  return allow_write_max(refdimensions, buffer_volume, make_int(pos), max);
+}
+
 void atomic_buffer_volume_add4f(int3 refdimensions, __global unsigned short *buffer_volume, float4 pos, uint4 valueb){
   atomic_buffer_volume_add4(refdimensions, buffer_volume, make_int(pos), valueb);
+}
+
+void buffer_volume_add4(int3 refdimensions, __global unsigned short* buffer_volume, int4 pos, uint4 valueb){
+  int idx = (refdimensions.x*refdimensions.z * pos.y + refdimensions.x * pos.z + pos.x)*4;
+  buffer_volume[idx + 0] += valueb.x;
+  buffer_volume[idx + 1] += valueb.y;
+  buffer_volume[idx + 2] += valueb.z;
+  buffer_volume[idx + 3] += valueb.w;
+}
+
+void buffer_volume_add4f(int3 refdimensions, __global unsigned short* buffer_volume, float4 pos, uint4 valueb){
+  buffer_volume_add4(refdimensions, buffer_volume, make_int(pos), valueb);
 }
 
 uint4 buffer_volume_read4(int3 refdimensions, __global unsigned short *buffer_volume, int4 pos)
