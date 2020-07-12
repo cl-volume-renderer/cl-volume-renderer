@@ -61,10 +61,14 @@ std::string tf_rect_selection::create_cl_condition(Volume_Stats stats) {
   cl_code << min_v;
   cl_code << " && value <= ";
   cl_code << max_v;
-  cl_code << " && gradient > ";
-  cl_code << min_g;
-  cl_code << " && gradient < ";
-  cl_code << max_g;
+
+  if (min_g > stats.min_g || max_g < stats.max_g) {
+    cl_code << " && gradient > ";
+    cl_code << min_g;
+    cl_code << " && gradient < ";
+    cl_code << max_g;
+  }
+
   cl_code << ")\n";
   cl_code << " {\n";
   cl_code << "    int4 tmp_color = {" << (int)(color[0]*255) << "," << (int)(color[1] *255) << "," << (int)(color[2]*255) << "," << (int)color[3]*255 << "};\n";
