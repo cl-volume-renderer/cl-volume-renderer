@@ -1,5 +1,6 @@
 #clw_include_once "utility.cl"
 #clw_include_once "utility_ray.cl"
+#clw_include_once "utility_filter.cl"
 
 
 __kernel void create_base_image(__read_only image3d_t reference_volume, __write_only image3d_t sdf_image_ping, __write_only image3d_t sdf_image_pong, uint max_iterations){
@@ -10,11 +11,14 @@ __kernel void create_base_image(__read_only image3d_t reference_volume, __write_
   int4 min_coords = {0, 0, 0, 0};
 
   int4 value = read_imagei(reference_volume, location);
+  float grad_length = length(gradient_prewitt_nn(reference_volume, make_float(location)));
   int resulting_value = 0;
 
   if (location.x >= reference_size.x || location.y >= reference_size.y || location.z >= reference_size.z)
    return;
-  bool is_event_result = is_event(value.x);
+  uint4 color = {0, 0, 0, 0};
+  bool is_event_result = is_event_gen(value.x, grad_length, &color);
+
   if (is_event_result) {
     resulting_value = -1;
   }else {
@@ -30,7 +34,8 @@ __kernel void create_base_image(__read_only image3d_t reference_volume, __write_
           int4 offset = {x, y, z, 0};
           int4 relative_pos = clamp(offset + location, min_coords, max_coords);
           int4 neightbour_value = read_imagei(reference_volume, relative_pos);
-          bool neightbour_event = is_event(neightbour_value.x);
+          float neightbour_grad_length = length(gradient_prewitt_nn(reference_volume, make_float(relative_pos)));
+          bool neightbour_event = is_event_gen(neightbour_value.x, neightbour_grad_length, &color);
           homogenous_neightbourhood = homogenous_neightbourhood & (neightbour_event == is_event_result);
         }
       }

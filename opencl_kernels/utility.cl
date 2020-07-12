@@ -2,6 +2,12 @@ inline float4 make_float4 /*great_again*/(float3 value, float other){
   return (float4)(value, other);
 }
 
+inline float4 make_float /*great_again*/(int4 in){
+  float4 result = {in.x, in.y, in.z, in.w};
+  return result;
+}
+
+
 inline int4 make_int(float4 value){
   const int4 return_int = {value.x, value.y, value.z, value.z};
   return return_int;
