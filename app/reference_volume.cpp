@@ -60,6 +60,7 @@ void reference_volume::set_clipping(std::array<size_t, 3> min, std::array<size_t
   assert(clip_min[0] < clip_max[0]);
   assert(clip_min[1] < clip_max[1]);
   assert(clip_min[2] < clip_max[2]);
+  //copy the content of the original volume from the cropped sizes to a new one
   cropped_volume_size = {clip_max[0] - clip_min[0], clip_max[1] - clip_min[1], clip_max[2] - clip_min[2]};
   clw_vector<unsigned int> start(ctx, std::vector<unsigned int>({(unsigned int)clip_min[0], (unsigned int)clip_min[1], (unsigned int)clip_min[2]}), true);
   clw_vector<unsigned int> length(ctx, std::vector<unsigned int>({(unsigned int)(clip_max[0] - clip_min[0]), (unsigned int)(clip_max[1] - clip_min[1]), (unsigned int)(clip_max[2] - clip_min[2]), 4}), true);
