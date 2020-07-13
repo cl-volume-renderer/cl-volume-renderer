@@ -63,6 +63,7 @@ neightbour_distance_calc(__read_only image3d_t sdf_image, int4 pos) {
   int4 max_coords = reference_size + tmp_for_minus_ones;
   int4 min_coords = {0, 0, 0, 0};
 
+  //get the minimal values from arround the passed position.
   for(int x = -1; x < 2; x++) {
     for(int y = -1; y < 2; y++) {
       for(int z = -1; z < 2; z++) {
@@ -71,6 +72,7 @@ neightbour_distance_calc(__read_only image3d_t sdf_image, int4 pos) {
           int4 relative_pos = clamp(offset + pos, min_coords, max_coords);
           int4 value = read_imagei(sdf_image, relative_pos);
           char tmp = (char) abs(value.x);
+          //add the absolut and the signed value, check later on if the absolut value of the sum of all summed are the same, then all the signes have been equal.
           abs_added_distance += tmp;
           added_distance += value.x;
           neightbour_distance = min(neightbour_distance, (char)(tmp));

@@ -23,6 +23,7 @@ __kernel void tf_sort_values(__read_only image3d_t reference_volume, __global ui
   float value_range = max_value - min_value;
   float gradiant_range = max_gradient - min_gradient;
 
+  //transform the value and the gradient to a new point, and atomic inc
   int2 relative_point = {
     round(((float)(ref_value - min_value)/value_range)*width),
     round(((float)(grad_length - min_gradient)/gradiant_range)*height)
@@ -43,6 +44,7 @@ __kernel void tf_flush_color_frame(__write_only image2d_t color_frame,
 
   int value = frame[get_global_id(0)*frame_size.y + (frame_size.y - get_global_id(1) - 1)];
   int local_value = -1;
+  //lookup the value, and set the rank of the value as local value
   for(int i = 0; i < lookup_len; i++) {
     if (lookup[i] == value) {
       local_value = i;
@@ -55,6 +57,7 @@ __kernel void tf_flush_color_frame(__write_only image2d_t color_frame,
   float max_color = 255.0f;
 
   int result = 0;
+  //flatten the local values from [0;lookup_len] ot [0, 255] So we actually can see the colors
   if (local_value > -1)
     result = min_color + (
       ((float)local_value) / (float)lookup_len)
