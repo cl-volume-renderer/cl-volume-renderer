@@ -1,5 +1,3 @@
-#pragma once
-
 #include <limits>
 #include <clw_image.h>
 #include <clw_context.h>
@@ -19,7 +17,6 @@ reference_volume::reference_volume(clw_context &c, volume_block *b) :
                      value_range({0, 0}),
                      gradient_range({0, 0}) {
   TIME_START();
-  
 
 
   //fetch stats
@@ -74,7 +71,6 @@ void reference_volume::filter(){
   TIME_START();
   clw_image<short>& ref = (cropped_volume.size() > 8) ? cropped_volume : original_volume;
   {
-    auto dimensions = ref.get_dimensions();
     clw_image<short> buffer(ctx, std::vector<short> (get_volume_length(), 0), get_volume_size(), false);
     auto bilateral_filter = clw_function(ctx, "volume_filter.cl", "bilateral_filter");
     bilateral_filter.execute(get_volume_size_evenness(8),{4,4,4}, ref, buffer);
@@ -105,6 +101,7 @@ size_t reference_volume::get_volume_length() const {
   return cropped_volume_size[0] * cropped_volume_size[1] * cropped_volume_size[2];
 }
 const clw_image<short>& reference_volume::get_reference_volume() const {
+  //cropped_volume only contains elements when it is cropped.
   if (cropped_volume.size() > 8)
     return cropped_volume;
   else
