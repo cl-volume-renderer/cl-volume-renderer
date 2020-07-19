@@ -22,12 +22,14 @@ This will automatically download stb & imgui.
 
 Launch application: ./app/volume-renderer *nrrd-file* *hdr-environment-map*
 
-Controls:
-* Movement: W,A,S,D,E,Q
+**Notice:** You can also use regular JPG or PNG files for the environment map.
+
+# Controls:
+* Movement: W, A, S, D, E, Q
   * Modifier: Shift, Ctrl
 * Update frame: R
 
-Notice: You can also use regular jpg or png files for the environment map.
+
 
 # Platforms
 Tested on:
