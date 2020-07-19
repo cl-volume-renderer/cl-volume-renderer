@@ -4,12 +4,12 @@
 #include <imgui_impl_sdl.h>
 #include <imgui_impl_opengl2.h>
 #include <string>
-#include "volume_block.h"
-#include <clw_image.h>
-#include <clw_context.h>
-#include "common.h"
-#include "reference_volume.h"
-#include "env_map.h"
+#include "volume_block.hpp"
+#include <clw_image.hpp>
+#include <clw_context.hpp>
+#include "common.hpp"
+#include "reference_volume.hpp"
+#include "env_map.hpp"
 
 struct ui_state{
    std::string path;
@@ -24,7 +24,7 @@ struct ui_state{
    bool cam_changed;
 };
 
-#include <tf_part.h>
+#include "tf_part.hpp"
 
 class frame_emitter {
   public:

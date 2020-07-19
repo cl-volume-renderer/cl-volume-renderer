@@ -1,6 +1,6 @@
 #include <sstream>
-#include <ui.h>
-#include <tf_part.h>
+#include <ui.hpp>
+#include <tf_part.hpp>
 #include <imgui_impl_sdl.h>
 #include <imgui_impl_opengl2.h>
 #include <math.h>

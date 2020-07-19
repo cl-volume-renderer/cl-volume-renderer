@@ -1,5 +1,5 @@
-#include "volume_block.h"
-#include "nrrd_loader.h"
+#include "volume_block.hpp"
+#include "nrrd_loader.hpp"
 
 volume_block::volume_block(const unsigned int voxel_count_x,
                            const unsigned int voxel_count_y,

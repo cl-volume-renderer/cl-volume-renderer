@@ -5,7 +5,7 @@
 #include <string>
 #include <imgui_impl_sdl.h>
 #include <imgui_impl_opengl2.h>
-#include "reference_volume.h"
+#include "reference_volume.hpp"
 
 class tf_selection {
   public:

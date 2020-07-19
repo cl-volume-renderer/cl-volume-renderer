@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-#include "volume_block.h"
+#include "volume_block.hpp"
 /// Header for NRRD file, only contains relevant information.
 /// Notice, not all filters will use all settings
 struct nrrd_header {

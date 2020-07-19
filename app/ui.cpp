@@ -1,5 +1,5 @@
-#include "ui.h"
-#include <tf_part.h>
+#include "ui.hpp"
+#include <tf_part.hpp>
 #include <SDL.h>
 #include <string>
 #include <SDL_opengl.h>
@@ -11,10 +11,10 @@
 #include <imgui_impl_opengl2.cpp>
 #include <imgui_impl_sdl.cpp>
 #include "imgui.h"
-#include "nrrd_loader.h"
-#include "hdre_loader.h"
-#include "clw_context.h"
-#include "common_defines.h"
+#include "nrrd_loader.hpp"
+#include "hdre_loader.hpp"
+#include "clw_context.hpp"
+#include "common_defines.hpp"
 
 static const GLubyte emptyData[] = {0, 0, 0, 250};
 

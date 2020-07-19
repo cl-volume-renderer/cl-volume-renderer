@@ -1,4 +1,4 @@
-#include "nrrd_loader.h"
+#include "nrrd_loader.hpp"
 #include <zlib.h>
 #include <fstream>
 #include <iostream>

@@ -1,5 +1,5 @@
 #pragma once
-#include "reference_volume.h"
+#include "reference_volume.hpp"
 
 
 class signed_distance_field {

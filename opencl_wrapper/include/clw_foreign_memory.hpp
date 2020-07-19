@@ -3,8 +3,8 @@
 #include <iostream>
 #include <type_traits>
 #include <vector>
-#include "clw_context.h"
-#include "clw_helper.h"
+#include "clw_context.hpp" 
+#include "clw_helper.hpp"
 #include <GL/gl.h>
 
 class clw_foreign_memory {

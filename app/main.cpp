@@ -1,10 +1,9 @@
 #include <iostream>
-#include <clw_context.h>
-#include <clw_foreign_memory.h>
-#include <clw_function.h>
-#include "ui.h"
-#include "renderer.h"
-#include "clw_context.h"
+#include <clw_context.hpp>
+#include <clw_foreign_memory.hpp>
+#include <clw_function.hpp>
+#include "ui.hpp"
+#include "renderer.hpp"
 
 int main(int argc, char *argv[]){
   if (argc != 3) {

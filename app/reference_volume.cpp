@@ -1,12 +1,12 @@
 #include <limits>
-#include <clw_image.h>
-#include <clw_context.h>
-#include <clw_vector.h>
-#include <clw_function.h>
-#include "volume_block.h"
-#include "common.h"
-#include "debug_helper.h"
-#include "reference_volume.h"
+#include <clw_image.hpp>
+#include <clw_context.hpp>
+#include <clw_vector.hpp>
+#include <clw_function.hpp>
+#include "volume_block.hpp"
+#include "common.hpp"
+#include "debug_helper.hpp"
+#include "reference_volume.hpp"
 
 reference_volume::reference_volume(clw_context &c, volume_block *b) :
                      ctx(c),

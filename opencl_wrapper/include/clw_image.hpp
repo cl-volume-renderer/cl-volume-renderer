@@ -5,8 +5,8 @@
 #include <vector>
 #include <array>
 #include <cassert>
-#include "clw_context.h"
-#include "clw_helper.h"
+#include "clw_context.hpp"
+#include "clw_helper.hpp"
 
 template <typename TDevice, size_t ChannelSize=1>
 class clw_image {

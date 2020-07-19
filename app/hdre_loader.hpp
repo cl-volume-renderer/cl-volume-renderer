@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
-#include "image.h"
+#include "image.hpp"
 
 /// Header for hdrE file, only contains relevant information.
 struct hdre_header {

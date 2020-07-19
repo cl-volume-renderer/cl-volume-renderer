@@ -1,6 +1,6 @@
-#include "clw_context.h"
+#include "clw_context.hpp"
+#include "clw_helper.hpp"
 #include <vector>
-#include "clw_helper.h"
 #include <array>
 
 ///Helper function to return all platforms

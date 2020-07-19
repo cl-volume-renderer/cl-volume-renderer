@@ -6,7 +6,7 @@ app_source = declare_dependency(
   include_directories : include_directories('.'),
   sources: ['nrrd_loader.cpp',
    'volume_block.cpp', 'ui.cpp',
-   'renderer.cpp', 'tf_part.h',
+   'renderer.cpp', 'tf_part.hpp',
    'tf_part.cpp', 'hdre_loader.cpp',
    'image.cpp', 'signed_distance_field.cpp', 'reference_volume.cpp'],
   dependencies: [opencl_wrapper, stb, sdl, zlib, imgui, gl],

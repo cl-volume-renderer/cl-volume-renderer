@@ -10,9 +10,9 @@
 #include <tuple>
 #include <filesystem>
 #include <algorithm>
-#include "clw_context.h"
-#include "clw_helper.h"
-#include "clw_vector.h"
+#include "clw_context.hpp"
+#include "clw_helper.hpp"
+#include "clw_vector.hpp"
 
 #ifndef KERNEL_DIR
 #define KERNEL_DIR ""

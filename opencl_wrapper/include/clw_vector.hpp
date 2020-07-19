@@ -4,8 +4,8 @@
 #include <type_traits>
 #include <vector>
 #include <cassert>
-#include "clw_context.h"
-#include "clw_helper.h"
+#include "clw_context.hpp"
+#include "clw_helper.hpp"
 
 template <typename TDevice>
 class clw_vector {

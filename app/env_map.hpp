@@ -1,7 +1,7 @@
 #pragma once
 
-#include "hdre_loader.h"
-#include "clw_image.h"
+#include "hdre_loader.hpp"
+#include <clw_image.hpp>
 
 class env_map {
 private:

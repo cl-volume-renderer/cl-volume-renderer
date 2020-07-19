@@ -1,9 +1,9 @@
 #pragma once
 
 #include <limits>
-#include <clw_image.h>
-#include <clw_context.h>
-#include "volume_block.h"
+#include <clw_image.hpp>
+#include <clw_context.hpp>
+#include "volume_block.hpp"
 
 struct Volume_Stats{
   float min_v; // minimum value in the volume

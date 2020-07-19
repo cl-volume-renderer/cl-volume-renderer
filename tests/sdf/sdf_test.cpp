@@ -1,6 +1,6 @@
-#include <signed_distance_field.h>
-#include <nrrd_loader.h>
-#include "debug_helper.h"
+#include <signed_distance_field.hpp>
+#include <nrrd_loader.hpp>
+#include <debug_helper.hpp>
 #include "test_config.h"
 
 const size_t expected_length = 50540;

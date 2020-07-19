@@ -1,11 +1,11 @@
 #pragma once
-#include <ui.h>
-#include <clw_context.h>
-#include <clw_function.h>
-#include <clw_image.h>
+#include <ui.hpp>
+#include <clw_context.hpp>
+#include <clw_function.hpp>
+#include <clw_image.hpp>
 #include <string>
-#include "reference_volume.h"
-#include "signed_distance_field.h"
+#include "reference_volume.hpp"
+#include "signed_distance_field.hpp"
 
 class renderer : public frame_emitter {
   private:

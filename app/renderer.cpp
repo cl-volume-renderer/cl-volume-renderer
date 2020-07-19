@@ -1,9 +1,9 @@
-#include "renderer.h"
-#include "nrrd_loader.h"
-#include "debug_helper.h"
+#include "renderer.hpp"
+#include "nrrd_loader.hpp"
+#include "debug_helper.hpp"
 #include <cstdlib>
 #include <set>
-#include "common_defines.h"
+#include "common_defines.hpp"
 
 renderer::renderer(clw_context &c)
 : ctx(c),
