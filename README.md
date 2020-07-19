@@ -1,6 +1,4 @@
-# gpgpu-volume-renderer
-
-gpgpu-volume-renderer project by Pit Henrich and Marcel Hollerbach
+![UIImage](https://user-images.githubusercontent.com/1415748/87870529-39869a00-c9a9-11ea-9801-76596a20fa96.jpg)
 
 # Build:
 Ensure that you have installed the required packages (sdl2, zlib, gl, opencl, openmp)
