@@ -25,9 +25,9 @@ This will automatically download stb & imgui
 Binary to launch the application: ./app/volume-renderer *nrrd-file* *hdr-environment-map*
 Notice: You can also use regular jpg or png for the environment map.
 
-#Platforms
+# Platforms
 Tested on:
-Nvidia GeForce GTX 1050 4GB (Mobile)
-Nvidia GeForce GTX 750 2GB (Desktop)
-AMD Vega 56 8GB (Desktop)
-Intel HD 4400 2GB (Mobile)
+* Nvidia GeForce GTX 1050 4GB (Mobile)
+* Nvidia GeForce GTX 750 2GB (Desktop)
+* AMD Vega 56 8GB (Desktop)
+* Intel HD 4400 2GB (Mobile)
