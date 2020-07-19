@@ -18,10 +18,16 @@ meson ..
 ninja
 ```
 
-This will automatically download stb & imgui
+This will automatically download stb & imgui.
 
-Binary to launch the application: ./app/volume-renderer *nrrd-file* *hdr-environment-map*
-Notice: You can also use regular jpg or png for the environment map.
+Launch application: ./app/volume-renderer *nrrd-file* *hdr-environment-map*
+
+Controls:
+* Movement: W,A,S,D,E,Q
+  * Modifier: Shift, Ctrl
+* Update frame: R
+
+Notice: You can also use regular jpg or png files for the environment map.
 
 # Platforms
 Tested on:
