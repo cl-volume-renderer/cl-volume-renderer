@@ -21,7 +21,10 @@ ninja
 
 This will automatically download stb & imgui.
 
-Launch application: ./app/volume-renderer *nrrd-file* *hdr-environment-map*
+Launch application: 
+```
+./app/volume-renderer *nrrd-file* *hdr-environment-map*
+```
 
 **Notice:** You can also use regular JPG or PNG files for the environment map.
 
